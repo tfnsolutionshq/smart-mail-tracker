@@ -49,7 +49,7 @@ function Settings() {
       {/* Settings Container */}
       <div className="bg-white rounded-lg border border-gray-200">
         {/* Tabs */}
-        <div className="bg-gray-100 rounded-t-lg">
+        <div className="border-b">
           <nav className="flex">
             {tabs.map((tab) => {
               const IconComponent = tab.icon
@@ -57,10 +57,10 @@ function Settings() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-1 px-4 text-center rounded-full font-medium text-sm flex items-center justify-center gap-2 ${
+                  className={`px-6 py-3 text-sm font-medium flex items-center gap-2 ${
                     activeTab === tab.id
-                      ? 'bg-white m-1 rounded-full text-gray-900 border-b-2 border-white'
-                      : 'text-gray-600 hover:text-gray-800'
+                      ? 'border-b-2 border-blue-600 text-blue-600'
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   <IconComponent className="w-4 h-4" />

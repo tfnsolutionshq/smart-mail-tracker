@@ -1,0 +1,55 @@
+info:
+  name: Update Draft
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}memos/4d086c90-6d3b-4b87-b0d5-486d99c2245a/update"
+  body:
+    type: multipart-form
+    data:
+      - name: subject
+        type: text
+        value: Testing Draft Update
+      - name: body
+        type: text
+        value: Hi dear, i am testing it out hello
+      - name: status
+        type: text
+        value: draft
+        disabled: true
+      - name: scheduled_for
+        type: text
+        value: ""
+        disabled: true
+      - name: is_public
+        type: text
+        value: "0"
+        disabled: true
+      - name: category_id
+        type: text
+        value: "1"
+        disabled: true
+      - name: priority
+        type: text
+        value: High
+        disabled: true
+      - name: workflow_id
+        type: text
+        value: 019ac9fa-6931-738a-bac8-7ab484c67265
+        disabled: true
+      - name: attachments[]
+        type: file
+        value:
+          - /C:/Users/HomePC/Pictures/icons/amazon.png
+        disabled: true
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

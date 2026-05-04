@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { roleAPI } from '../../services/api'
+import { roleAPI, identityBaseUrl } from '../../services/api'
 import { FiX, FiCheck } from 'react-icons/fi'
 
 function EditRole({ role, onClose, onSuccess }) {
@@ -52,7 +52,7 @@ function EditRole({ role, onClose, onSuccess }) {
     setLoading(true)
 
     try {
-      const response = await axios.put(`/api/v1/roles/${role.id}?name=${encodeURIComponent(formData.name)}&description=${encodeURIComponent(formData.description)}`, null, {
+      const response = await axios.put(`${identityBaseUrl}/roles/${role.id}?name=${encodeURIComponent(formData.name)}&description=${encodeURIComponent(formData.description)}`, null, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -75,7 +75,7 @@ function EditRole({ role, onClose, onSuccess }) {
     setLoading(true)
 
     try {
-      const response = await axios.put(`/api/v1/roles/${role.id}/permissions/sync`, {
+      const response = await axios.put(`${identityBaseUrl}/roles/${role.id}/permissions/sync`, {
         permission_ids: selectedPermissions
       }, {
         headers: {

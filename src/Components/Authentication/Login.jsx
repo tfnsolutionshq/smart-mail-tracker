@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import { useAuth } from "../../context/AuthContext"
 import { useNotification } from "../../context/NotificationContext"
+import { identityBaseUrl } from "../../services/api"
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from "react-icons/fi"
 import { FcGoogle } from "react-icons/fc"
 import { SiApple } from "react-icons/si"
@@ -33,11 +34,8 @@ export default function LoginPage() {
     setLoading(true)
     
     try {
-      // Hardcoded identity API base URL (production)
-      const API_BASE_URL = 'https://identity.smt.tfnsolutions.us/api/v1'
-
-      console.log('Login - Making API call to:', `${API_BASE_URL}/login`)
-      const response = await axios.post(`${API_BASE_URL}/login`, {
+      console.log('Login - Making API call to:', `${identityBaseUrl}/login`)
+      const response = await axios.post(`${identityBaseUrl}/login`, {
         email,
         password
       }, {
@@ -161,14 +159,14 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="flex items-center gap-2 my-4">
+          {/* <div className="flex items-center gap-2 my-4">
             <div className="flex-1 h-px bg-gray-300"></div>
             <span className="text-xs text-gray-500 font-medium">OR CONTINUE WITH</span>
             <div className="flex-1 h-px bg-gray-300"></div>
-          </div>
+          </div> */}
 
           {/* Social Login Buttons */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <button className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 rounded-lg transition-colors duration-200 text-sm">
               <FcGoogle className="w-4 h-4" />
               Continue with Google
@@ -177,7 +175,7 @@ export default function LoginPage() {
               <SiApple className="w-4 h-4" />
               Continue with Apple
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

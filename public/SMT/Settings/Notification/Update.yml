@@ -1,0 +1,44 @@
+info:
+  name: Update
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{NOTIFY_BASE_URL}}settings/notifications"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"email_new_memos\": false,\r
+
+      \  \"email_approval_requests\": true,\r
+
+      \  \"email_deadline_reminders\": true,\r
+
+      \  \"email_comments_replies\": false,\r
+
+      \  \"push_new_memos\": true,\r
+
+      \  \"push_approval_requests\": true,\r
+
+      \  \"push_deadline_reminders\": false,\r
+
+      \  \"push_comments_replies\": true,\r
+
+      \  \"enable_desktop_notifications\": false,\r
+
+      \  \"notification_sound\": true,\r
+
+      \  \"quiet_hours\": false\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

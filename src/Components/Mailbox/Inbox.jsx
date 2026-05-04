@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { memoAPI } from '../../services/api'
+import { memoAPI, memoBaseUrl, identityStorageBase, parseMailboxEnvelope } from '../../services/api'
 
 function Inbox() {
   const navigate = useNavigate()
@@ -13,13 +13,13 @@ function Inbox() {
   const [showActions, setShowActions] = useState(null)
   const [emails, setEmails] = useState([])
   const [loading, setLoading] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
   const [pinningMemo, setPinningMemo] = useState(null)
   const [starringMemo, setStarringMemo] = useState(null)
   const [archivingMemo, setArchivingMemo] = useState(null)
   const [deletingMemo, setDeletingMemo] = useState(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [memoToDelete, setMemoToDelete] = useState(null)
+  const [inboxTotalCount, setInboxTotalCount] = useState(0)
 
   const fetchInbox = async () => {
     if (!token) {
@@ -30,23 +30,29 @@ function Inbox() {
 
     setLoading(true)
     try {
-      console.log('Token being used:', token?.substring(0, 10) + '...')
-      const response = await axios.get('/memo-api/mailbox/inbox', {
+      const apiClient = axios.create({
+        baseURL: memoBaseUrl,
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
       
+      const response = await apiClient.get('/mailbox/inbox')
+      
       console.log('Inbox response:', response.data)
       if (response.data.status && response.data.data) {
-        // Sort emails to show pinned ones first
-        const sortedEmails = response.data.data.data.sort((a, b) => {
+        const { memos: list, counts } = parseMailboxEnvelope(response.data.data)
+        const sortedEmails = [...list].sort((a, b) => {
           if (a.is_pinned && !b.is_pinned) return -1
           if (!a.is_pinned && b.is_pinned) return 1
           return new Date(b.created_at) - new Date(a.created_at)
         })
         setEmails(sortedEmails)
-        setUnreadCount(response.data.data.meta.unread_count)
+        const total = counts?.inbox_count
+        setInboxTotalCount(
+          total != null && total !== '' ? Number(total) : sortedEmails.length
+        )
       }
     } catch (error) {
       console.error('Error fetching inbox:', error)
@@ -158,7 +164,9 @@ function Inbox() {
       <div className="border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-lg md:text-xl font-bold">Inbox</h1>
-          <span className="text-xs md:text-sm text-gray-500 border rounded-md p-1">{emails.length} memos</span>
+          <span className="text-xs md:text-sm text-gray-600 border rounded-md px-2 py-1 tabular-nums">
+            {inboxTotalCount} in inbox
+          </span>
         </div>
       </div>
       
@@ -218,7 +226,7 @@ function Inbox() {
               <div className="relative">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-300 rounded-full flex items-center justify-center text-xs md:text-sm font-medium overflow-hidden">
                   {email.sender?.avatar ? (
-                    <img src={`https://identity.smt.tfnsolutions.us/storage/${email.sender.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={`${identityStorageBase}/storage/${email.sender.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     email.sender?.name ? email.sender.name.substring(0, 2).toUpperCase() : 'U'
                   )}
@@ -343,7 +351,7 @@ function Inbox() {
                       {email.is_pinned ? 'Unpin' : 'Pin'}
                     </button>
                     
-                    <button 
+                    {/* <button 
                       onClick={() => {
                         const replyRecipients = [{
                           recipient_id: email.sender?.id,
@@ -389,7 +397,7 @@ function Inbox() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                       </svg>
                       Forward
-                    </button>
+                    </button> */}
 
                     <hr />
                     

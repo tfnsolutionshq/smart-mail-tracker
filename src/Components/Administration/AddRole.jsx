@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { roleAPI } from '../../services/api'
+import { roleAPI, identityBaseUrl } from '../../services/api'
 import { FiX, FiCheck } from 'react-icons/fi'
 
 function AddRole({ onClose, onSuccess }) {
@@ -54,7 +54,7 @@ function AddRole({ onClose, onSuccess }) {
       formDataObj.append('name', formData.name)
       formDataObj.append('description', formData.description)
 
-      const response = await axios.post('/api/v1/roles', formDataObj, {
+      const response = await axios.post(`${identityBaseUrl}/roles`, formDataObj, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -78,7 +78,7 @@ function AddRole({ onClose, onSuccess }) {
     setLoading(true)
 
     try {
-      const response = await axios.put(`/api/v1/roles/${createdRole.id}/permissions/sync`, {
+      const response = await axios.put(`${identityBaseUrl}/roles/${createdRole.id}/permissions/sync`, {
         permission_ids: selectedPermissions
       }, {
         headers: {

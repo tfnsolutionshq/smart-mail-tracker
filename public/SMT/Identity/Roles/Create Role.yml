@@ -1,0 +1,29 @@
+info:
+  name: Create Role
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{identity_base_url}}roles"
+  body:
+    type: multipart-form
+    data:
+      - name: name
+        type: text
+        value: Elders
+      - name: description
+        type: text
+        value: Manage monry accounts
+      - name: ""
+        type: text
+        value: ""
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

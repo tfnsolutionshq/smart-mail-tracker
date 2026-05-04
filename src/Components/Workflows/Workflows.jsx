@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react'
-import { FiSearch, FiDownload, FiPlus, FiMoreHorizontal, FiEdit, FiCopy, FiPause, FiClock, FiTrendingUp, FiPercent, FiPlay } from 'react-icons/fi'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { FiSearch, FiDownload, FiPlus, FiMoreHorizontal, FiEdit, FiCopy, FiPause, FiClock, FiTrendingUp, FiPercent, FiPlay, FiFilter } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { workflowAPI, roleAPI } from '../../services/api'
+import { workflowAPI, roleAPI, categoryAPI } from '../../services/api'
 import Templates from './Templates'
 import ConfirmationModal from './ConfirmationModal'
+
+function normalizeWorkflowList(payload) {
+  if (!payload) return []
+  if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload.data)) return payload.data
+  return []
+}
 
 function Workflows() {
   const navigate = useNavigate()
@@ -13,26 +20,67 @@ function Workflows() {
   const { showNotification } = useNotification()
   const [activeTab, setActiveTab] = useState('Overview')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All Categories')
-  const [selectedStatus, setSelectedStatus] = useState('All Statuses')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [selectedRoleId, setSelectedRoleId] = useState('')
+  const [estimatedTimeMin, setEstimatedTimeMin] = useState('')
+  const [estimatedTimeMax, setEstimatedTimeMax] = useState('')
   const [workflows, setWorkflows] = useState([])
+  const [categories, setCategories] = useState([])
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
 
-  const tabs = ['Overview', 'Templates', 'Analytics', 'Settings']
+  const tabs = ['Overview', 'Templates']
+  const advancedFilterCount =
+    (selectedRoleId ? 1 : 0) +
+    (estimatedTimeMin !== '' ? 1 : 0) +
+    (estimatedTimeMax !== '' ? 1 : 0)
 
-  const fetchWorkflows = async () => {
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 400)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+
+  useEffect(() => {
+    if (!token) return
+    const loadCategories = async () => {
+      try {
+        const res = await categoryAPI.getCategories(token)
+        if (res.status && res.data?.data) {
+          setCategories(res.data.data)
+        }
+      } catch (e) {
+        console.error('Error fetching categories:', e)
+      }
+    }
+    loadCategories()
+  }, [token])
+
+  const fetchWorkflows = useCallback(async () => {
+    if (!token) return
     setLoading(true)
     try {
-      const [workflowResponse, roleResponse] = await Promise.all([
-        workflowAPI.getWorkflows(token),
-        roleAPI.getRoles(token)
-      ])
-      
-      if (workflowResponse.status && workflowResponse.data) {
-        setWorkflows(workflowResponse.data)
+      const params = {}
+      if (debouncedSearch) params.search = debouncedSearch
+      if (selectedCategoryId) {
+        params.category_id = selectedCategoryId
+        const cat = categories.find((c) => String(c.id) === String(selectedCategoryId))
+        if (cat?.name) params.category = cat.name
       }
-      
+      if (selectedRoleId) params.roles = selectedRoleId
+      if (estimatedTimeMin !== '') params.estimated_time_min = estimatedTimeMin
+      if (estimatedTimeMax !== '') params.estimated_time_max = estimatedTimeMax
+
+      const [workflowResponse, roleResponse] = await Promise.all([
+        workflowAPI.getWorkflows(token, params),
+        roleAPI.getRoles(token),
+      ])
+
+      if (workflowResponse.status) {
+        setWorkflows(normalizeWorkflowList(workflowResponse.data))
+      }
+
       if (roleResponse.status && roleResponse.data) {
         setRoles(roleResponse.data.data)
       }
@@ -42,19 +90,19 @@ function Workflows() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [
+    token,
+    debouncedSearch,
+    selectedCategoryId,
+    selectedRoleId,
+    estimatedTimeMin,
+    estimatedTimeMax,
+    categories,
+  ])
 
   useEffect(() => {
     fetchWorkflows()
-  }, [])
-
-  const filteredWorkflows = workflows.filter(workflow => {
-    const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         workflow.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === 'All Categories' || workflow.category_name === selectedCategory
-    const matchesStatus = selectedStatus === 'All Statuses' || (workflow.is_active ? 'Active' : 'Inactive') === selectedStatus
-    return matchesSearch && matchesCategory && matchesStatus
-  })
+  }, [fetchWorkflows])
 
   const activeWorkflows = workflows.filter(w => w.is_active).length
   const totalPending = workflows.reduce((sum, w) => sum + w.total_active_memos, 0)
@@ -73,10 +121,10 @@ function Workflows() {
             <p className="text-gray-600 text-sm mt-1">Design, manage, and monitor your organization's approval workflows</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+            {/* <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
               <FiDownload className="w-4 h-4" />
               Import Template
-            </button>
+            </button> */}
             <button 
               onClick={() => navigate('/create-workflow')}
               className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
@@ -118,16 +166,16 @@ function Workflows() {
 
       {/* Tab Navigation */}
       <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="bg-gray-100 rounded-t-lg">
+        <div className="border-b">
           <nav className="flex">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-1 px-4 text-center rounded-full font-medium text-sm ${
+                className={`px-6 py-3 text-sm font-medium ${
                   activeTab === tab
-                    ? 'bg-white m-1 rounded-full text-gray-900 border-b-2 border-white'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 {tab}
@@ -139,11 +187,11 @@ function Workflows() {
         <div className="p-6">
           {activeTab === 'Overview' && (
             <>
-              {/* Search and Filters */}
-              <div className="mb-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              {/* Search, category (always visible); more filters behind toggle */}
+              <div className="mb-6 space-y-3">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                     <input
                       type="text"
                       placeholder="Search workflows..."
@@ -153,27 +201,83 @@ function Workflows() {
                     />
                   </div>
                   <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    value={selectedCategoryId}
+                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent min-w-[160px] sm:max-w-xs bg-white"
                   >
-                    <option>All Categories</option>
-                    <option>Financial</option>
-                    <option>Policy</option>
-                    <option>HR</option>
-                    <option>Security</option>
+                    <option value="">All categories</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedFilters((open) => !open)}
+                    aria-expanded={showAdvancedFilters}
+                    aria-label={showAdvancedFilters ? 'Hide extra filters' : 'Show extra filters'}
+                    title="Role, estimated time"
+                    className={`inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                      showAdvancedFilters || advancedFilterCount > 0
+                        ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
                   >
-                    <option>All Statuses</option>
-                    <option>Active</option>
-                    <option>Draft</option>
-                    <option>Paused</option>
-                  </select>
+                    <FiFilter className="w-4 h-4" />
+                    <span className="hidden sm:inline">More filters</span>
+                    {advancedFilterCount > 0 && (
+                      <span className="text-xs tabular-nums min-w-[1.25rem] px-1.5 rounded bg-white/20 text-white">
+                        {advancedFilterCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
+
+                {showAdvancedFilters && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50/70 p-4 space-y-4">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Refine by</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-gray-700">Role</label>
+                        <select
+                          value={selectedRoleId}
+                          onChange={(e) => setSelectedRoleId(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-sm w-full"
+                        >
+                          <option value="">All roles</option>
+                          {roles.map((role) => (
+                            <option key={role.id} value={role.id}>
+                              {role.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-gray-700">Est. time min (hours)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Min"
+                          value={estimatedTimeMin}
+                          onChange={(e) => setEstimatedTimeMin(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-sm w-full"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-gray-700">Est. time max (hours)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Max"
+                          value={estimatedTimeMax}
+                          onChange={(e) => setEstimatedTimeMax(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-sm w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Workflow Cards */}
@@ -183,7 +287,7 @@ function Workflows() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {filteredWorkflows.map((workflow) => (
+                  {workflows.map((workflow) => (
                     <WorkflowCard key={workflow.id} workflow={workflow} roles={roles} onWorkflowUpdate={fetchWorkflows} />
                   ))}
                 </div>
@@ -192,18 +296,6 @@ function Workflows() {
           )}
           
           {activeTab === 'Templates' && <Templates workflows={workflows} />}
-          
-          {activeTab === 'Analytics' && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Analytics content will be implemented here.</p>
-            </div>
-          )}
-          
-          {activeTab === 'Settings' && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Settings content will be implemented here.</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -239,6 +331,17 @@ function WorkflowCard({ workflow, roles, onWorkflowUpdate }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [loading, setLoading] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!showMenu) return
+    const onMouseDown = (e) => {
+      if (menuRef.current && menuRef.current.contains(e.target)) return
+      setShowMenu(false)
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    return () => document.removeEventListener('mousedown', onMouseDown)
+  }, [showMenu])
   
   const handleCardClick = () => {
     navigate(`/workflow-admin/${workflow.id}`)
@@ -310,7 +413,7 @@ function WorkflowCard({ workflow, roles, onWorkflowUpdate }) {
             <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{workflow.estimated_completion_time}h est.</span>
           </div>
         </div>
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu) }}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"

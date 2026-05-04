@@ -1,14 +1,44 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import MailboxSidebar from './MailboxSidebar'
 import Inbox from './Inbox'
 import Sentbox from './Sentbox'
 import Drafts from './Drafts'
 import Starred from './Starred'
 import Archived from './Archived'
+import { useAuth } from '../../context/AuthContext'
+import { memoAPI } from '../../services/api'
 
 function MailboxLayout() {
+  const { token } = useAuth()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [activeView, setActiveView] = useState('inbox')
+  const [sidebarCounts, setSidebarCounts] = useState({
+    inbox_count: 0,
+    starred_count: 0,
+    archived_count: 0,
+    drafts_count: 0,
+  })
+  const [inboxUnread, setInboxUnread] = useState(0)
+
+  const refreshSidebarCounts = useCallback(async () => {
+    if (!token) return
+    try {
+      const { counts, unreadCount } = await memoAPI.getMailboxSidebarCounts(token)
+      setSidebarCounts({
+        inbox_count: Number(counts.inbox_count) || 0,
+        starred_count: Number(counts.starred_count) || 0,
+        archived_count: Number(counts.archived_count) || 0,
+        drafts_count: Number(counts.drafts_count) || 0,
+      })
+      setInboxUnread(Number(unreadCount) || 0)
+    } catch (e) {
+      console.error('Failed to load mailbox sidebar counts:', e)
+    }
+  }, [token])
+
+  useEffect(() => {
+    refreshSidebarCounts()
+  }, [token, activeView, refreshSidebarCounts])
   
   // Auto-collapse sidebar on mobile
   useEffect(() => {
@@ -40,6 +70,8 @@ function MailboxLayout() {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           activeView={activeView}
           onViewChange={setActiveView}
+          sidebarCounts={sidebarCounts}
+          inboxUnread={inboxUnread}
         />
       </div>
       

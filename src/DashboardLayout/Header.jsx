@@ -1,34 +1,55 @@
 "use client"
 
 import { FiMenu, FiSearch, FiBell, FiSettings, FiUser, FiChevronDown, FiSun, FiHelpCircle } from "react-icons/fi"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import axios from "axios"
 import { useAuth } from "../context/AuthContext"
 import { useNotification } from "../context/NotificationContext"
 import { useNavigate } from "react-router-dom"
+import { identityBaseUrl, notificationBaseUrl } from "../services/api"
 import Notifications from "../Components/Notifications/Notifications"
 
 export default function Header({ onMenuClick }) {
-  const { logout, user } = useAuth()
+  const { logout, user, token } = useAuth()
   const { showNotification } = useNotification()
   const navigate = useNavigate()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const formatRole = (role) => {
-    const roleMap = {
-      'admin': 'Admin',
-      'department_head': 'Head of Department',
-      'dean': 'Dean',
-      'academic_dean': 'Academic Dean',
-      'provost': 'Provost'
-    }
-    return roleMap[role] || 'User'
+    if (!role) return 'User'
+    return role.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
   }
+
+  const getInitials = (firstName, lastName) => {
+    const first = firstName?.charAt(0)?.toUpperCase() || ''
+    const last = lastName?.charAt(0)?.toUpperCase() || ''
+    return `${first}${last}`
+  }
+
+  useEffect(() => {
+    async function fetchUnreadCount() {
+      if (!user?.id || !token) return
+      try {
+        const response = await axios.get(
+          `${notificationBaseUrl}/notifications/${user.id}/unread-count`
+        )
+        if (response.data.success) {
+          setUnreadCount(response.data.unread_count)
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error)
+      }
+    }
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [user?.id, token])
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`)
+      await axios.post(`${identityBaseUrl}/logout`)
     } catch (error) {
       console.log('Logout API error:', error)
     } finally {
@@ -75,19 +96,19 @@ export default function Header({ onMenuClick }) {
       <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end">
         {/* Admin Badge */}
         {/* <span className="hidden md:inline text-xs border border-gray-300 px-2 py-1 rounded-full font-medium text-gray-700">State University</span> */}
-        <span className="hidden sm:inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        {/* <span className="hidden sm:inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
           {formatRole(user?.role)}
-        </span>
+        </span> */}
 
         {/* Theme Toggle */}
-        <button className="hidden sm:block p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+        {/* <button className="hidden sm:block p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
           <FiSun className="w-4 h-4 text-gray-600" />
-        </button>
+        </button> */}
 
         {/* Help */}
-        <button className="hidden sm:block p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+        {/* <button className="hidden sm:block p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
           <FiHelpCircle className="w-4 h-4 text-gray-600" />
-        </button>
+        </button> */}
 
         {/* Notifications */}
         <div className="relative">
@@ -98,15 +119,17 @@ export default function Header({ onMenuClick }) {
             }`}
           >
             <FiBell className={`w-4 h-4 ${showNotifications ? "text-blue-600" : "text-gray-600"}`} />
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
-              <span className="text-xs font-bold text-white">1</span>
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                <span className="text-xs font-bold text-white">{unreadCount}</span>
+              </span>
+            )}
           </button>
 
           {/* Notifications Dropdown */}
           {showNotifications && (
             <div className="absolute right-0 mt-2 z-50 animate-in slide-in-from-top-2 fade-in duration-200">
-              <Notifications onClose={() => setShowNotifications(false)} />
+              <Notifications onClose={() => setShowNotifications(false)} onUpdate={() => setUnreadCount(0)} />
             </div>
           )}
         </div>
@@ -118,7 +141,7 @@ export default function Header({ onMenuClick }) {
             className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-xs font-semibold text-white">DSJ</span>
+              <span className="text-xs font-semibold text-white">{getInitials(user?.first_name, user?.last_name)}</span>
             </div>
             <div className="hidden sm:block text-left">
               <div className="text-sm font-medium text-gray-700">{user?.first_name} {user?.last_name}</div>
@@ -136,7 +159,7 @@ export default function Header({ onMenuClick }) {
               >
                 Profile
               </button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Settings</button>
+              {/* <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Settings</button> */}
               <hr className="my-2" />
               <button 
                 onClick={handleLogout}

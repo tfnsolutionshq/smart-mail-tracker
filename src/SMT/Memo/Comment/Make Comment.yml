@@ -1,0 +1,29 @@
+info:
+  name: Make Comment
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}memos/9b9c10fc-c01c-43e7-b4f1-fa94761f8c73/comments"
+  params:
+    - name: type
+      value: draft
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: "{\r
+
+      \    \"content\": \"Are You Sure??\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

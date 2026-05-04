@@ -1,0 +1,17 @@
+info:
+  name: Get Single User
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{LOCAL_BASE_URL}}users/019abf45-9f3e-70b9-a1ef-dbc8dec13601"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

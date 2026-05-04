@@ -1,0 +1,30 @@
+info:
+  name: Update
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{NOTIFY_BASE_URL}}settings/integrations"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"calendar_integration\": true,\r
+
+      \    \"slack_integration\": false,\r
+
+      \    \"microsoft_teams_integration\": true,\r
+
+      \    \"email_system_integration\": true\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

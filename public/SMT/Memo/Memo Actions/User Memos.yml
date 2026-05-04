@@ -1,0 +1,75 @@
+info:
+  name: User Memos
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{MEMO_BASE_URL}}memos/8cb00679-2a98-4059-a2ef-35bcb1fb6535"
+  params:
+    - name: type
+      value: draft
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: "{\r
+
+      \    \"subject\": \"Updated Scheduled New Computer Science Curriculum Proposal\",\r
+
+      \    \"body\": \"I am proposing a new curriculum for the Computer Science department that includes updated courses on AI and Machine Learning...\",\r
+
+      \    \"workflow_id\": \"019a5910-2a9b-7020-a29a-577c8a50b5b5\",\r
+
+      \    \"status\": \"scheduled\",\r
+
+      \    \"scheduled_for\": \"2025-12-20 09:00:00\",\r
+
+      \    \"is_public\": false,\r
+
+      \    \"recipients\": [\r
+
+      \        {\r
+
+      \            \"recipient_id\": \"443e0561-7194-4094-89f5-07e84f18bf20\",\r
+
+      \            \"recipient_type\": \"to\",\r
+
+      \            \"recipient_role\": \"department_head\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \            \"recipient_id\": \"4150573d-6359-4831-8b8b-6c5b6886cbdf\", \r
+
+      \            \"recipient_type\": \"cc\",\r
+
+      \            \"recipient_role\": \"dean\"\r
+
+      \        },\r
+
+      \r
+
+      \        {\r
+
+      \            \"recipient_id\": \"96bb8d92-5d31-4fe3-a9ce-460fbb0133f9\",\r
+
+      \            \"recipient_type\": \"cc\",\r
+
+      \            \"recipient_role\": \"provost\"\r
+
+      \        }\r
+
+      \    ]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

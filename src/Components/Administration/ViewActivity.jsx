@@ -17,7 +17,8 @@ function ViewActivity({ user, onClose }) {
 
   const fetchUserActivity = async () => {
     try {
-      const response = await axios.get(`/settings-api/logs/user/${user.id}`, {
+      const baseURL = import.meta.env.VITE_SETTINGS_API_BASE_URL || '/settings-api'
+      const response = await axios.get(`${baseURL}/logs/user/${user.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -45,7 +46,9 @@ function ViewActivity({ user, onClose }) {
   }
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'N/A'
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -57,8 +60,8 @@ function ViewActivity({ user, onClose }) {
   }
 
   return createPortal(
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-      <div className="bg-white rounded-lg p-4 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] px-2">
+      <div className="bg-white rounded-lg p-4 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">User Activity Log</h2>
@@ -72,22 +75,24 @@ function ViewActivity({ user, onClose }) {
         {/* User Info */}
         <div className="bg-gray-50 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium">
-              {user.avatar}
+            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
+              {user.avatarInitial || (user.name ? user.name.charAt(0).toUpperCase() : 'U')}
             </div>
-            <div className="flex-1">
-              <h3 className="text-xs font-medium text-gray-900">{user.name}</h3>
-              <p className="text-xs text-gray-600">{user.email}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xs font-medium text-gray-900 truncate">{user.name}</h3>
+              <p className="text-xs text-gray-600 break-words">{user.email}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-500">Last Login</p>
-              <p className="text-xs font-medium">{user.lastLogin}</p>
+              <p className="text-xs font-medium break-words max-w-[120px]">
+                {formatDate(user.lastLogin)}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
           <div className="text-center p-2 bg-gray-50 rounded-lg">
             <p className="text-lg font-bold text-gray-900">{user.memos}</p>
             <p className="text-xs text-gray-600">Memos Created</p>
@@ -97,7 +102,9 @@ function ViewActivity({ user, onClose }) {
             <p className="text-xs text-gray-600">Approval Rate</p>
           </div>
           <div className="text-center p-2 bg-gray-50 rounded-lg">
-            <p className="text-sm font-bold text-gray-900">{formatDate(user.createdAt)}</p>
+            <p className="text-xs font-bold text-gray-900 break-words">
+              {formatDate(user.created_at || user.createdAt)}
+            </p>
             <p className="text-xs text-gray-600">Member Since</p>
           </div>
         </div>
@@ -122,11 +129,17 @@ function ViewActivity({ user, onClose }) {
                     <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
                       <Icon className="w-3 h-3 text-blue-600" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-900">{activity.service_source}</p>
-                      <p className="text-xs text-gray-600">{activity.description}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-900 truncate">
+                        {activity.service_source}
+                      </p>
+                      <p className="text-xs text-gray-600 break-words">
+                        {activity.description}
+                      </p>
                     </div>
-                    <span className="text-xs text-gray-500">{formatDate(activity.created_at)}</span>
+                    <span className="text-xs text-gray-500 flex-shrink-0">
+                      {formatDate(activity.created_at)}
+                    </span>
                   </div>
                 )
               })

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { FiEdit, FiPlus, FiTrash2, FiMoreVertical } from 'react-icons/fi'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { roleAPI } from '../../services/api'
+import { roleAPI, identityBaseUrl } from '../../services/api'
 import EditRole from './EditRole'
 
 function RoleManagment() {
@@ -19,6 +19,8 @@ function RoleManagment() {
   const [roles, setRoles] = useState([])
   const [permissions, setPermissions] = useState([])
   const [loading, setLoading] = useState(false)
+  const roleMenuRef = useRef(null)
+  const permissionMenuRef = useRef(null)
   const { token } = useAuth()
   const { showNotification } = useNotification()
 
@@ -49,14 +51,30 @@ function RoleManagment() {
     fetchData()
   }, [])
 
+  // Close menus when clicking outside
+  useEffect(() => {
+    if (!showRoleMenu && !showPermissionMenu) return
+    const handleMouseDown = (e) => {
+      if (
+        (roleMenuRef.current && roleMenuRef.current.contains(e.target)) ||
+        (permissionMenuRef.current && permissionMenuRef.current.contains(e.target))
+      ) {
+        return
+      }
+      setShowRoleMenu(null)
+      setShowPermissionMenu(null)
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [showRoleMenu, showPermissionMenu])
+
   const handleDeleteRole = async () => {
     try {
-      const response = await axios.delete(`/api/v1/roles/${roleToDelete.id}`, {
+      await axios.delete(`${identityBaseUrl}/roles/${roleToDelete.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
       showNotification('Role deleted successfully', 'success')
       fetchData() // Refresh the roles list
     } catch (error) {
@@ -70,12 +88,11 @@ function RoleManagment() {
 
   const handleDeletePermission = async () => {
     try {
-      const response = await axios.delete(`/api/v1/permissions/${permissionToDelete.id}`, {
+      await axios.delete(`${identityBaseUrl}/permissions/${permissionToDelete.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
       showNotification('Permission deleted successfully', 'success')
       fetchData() // Refresh the permissions list
     } catch (error) {
@@ -110,7 +127,10 @@ function RoleManagment() {
                       <h3 className="text-sm font-medium text-gray-900">{role.name}</h3>
                       <p className="text-xs text-gray-500">{role.permissions?.length || 0} permissions assigned</p>
                     </div>
-                    <div className="relative">
+                    <div
+                      className="relative"
+                      ref={showRoleMenu === role.id ? roleMenuRef : null}
+                    >
                       <button
                         onClick={() => setShowRoleMenu(showRoleMenu === role.id ? null : role.id)}
                         className="p-1 hover:bg-gray-100 rounded"
@@ -190,7 +210,10 @@ function RoleManagment() {
                     >
                       {permission.name}
                     </h3>
-                    <div className="relative">
+                    <div
+                      className="relative"
+                      ref={showPermissionMenu === permission.id ? permissionMenuRef : null}
+                    >
                       <button
                         onClick={() => setShowPermissionMenu(showPermissionMenu === permission.id ? null : permission.id)}
                         className="p-1 hover:bg-gray-100 rounded"

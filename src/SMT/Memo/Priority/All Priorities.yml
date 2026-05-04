@@ -1,0 +1,17 @@
+info:
+  name: All Priorities
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{MEMO_BASE_URL}}priorities"
+  auth:
+    type: bearer
+    token: ""
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

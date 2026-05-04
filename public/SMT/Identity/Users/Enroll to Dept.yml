@@ -1,0 +1,32 @@
+info:
+  name: Enroll to Dept
+  type: http
+  seq: 20
+
+http:
+  method: PUT
+  url: "{{LOCAL_BASE_URL}}users/019b220e-1fcc-7271-8437-0eb52ed7c155/enroll-department?department_id=019abf45-6675-71a4-a92c-50e51b46e0ff"
+  params:
+    - name: department_id
+      value: 019abf45-6675-71a4-a92c-50e51b46e0ff
+      type: query
+  body:
+    type: json
+    data: "{\r
+
+      \  \"current_password\": \"oldpassword\",\r
+
+      \  \"new_password\": \"newpassword\",\r
+
+      \  \"new_password_confirmation\": \"newpassword\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

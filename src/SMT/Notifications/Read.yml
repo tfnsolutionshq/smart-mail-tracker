@@ -1,0 +1,15 @@
+info:
+  name: Read
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{NOTIFICATION_BASE_URL}}notifications/2/read"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

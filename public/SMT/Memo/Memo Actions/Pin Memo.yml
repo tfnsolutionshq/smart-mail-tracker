@@ -1,0 +1,17 @@
+info:
+  name: Pin Memo
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}memos/9b9c10fc-c01c-43e7-b4f1-fa94761f8c73/pin"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

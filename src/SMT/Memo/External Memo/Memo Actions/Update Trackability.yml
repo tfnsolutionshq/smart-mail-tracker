@@ -1,0 +1,17 @@
+info:
+  name: Update Trackability
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{MEMO_BASE_URL}}external-memos/52a34d56-3757-479a-a8a8-c57bfa064ea9/trackability"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

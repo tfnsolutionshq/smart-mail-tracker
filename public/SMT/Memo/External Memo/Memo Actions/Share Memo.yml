@@ -1,0 +1,31 @@
+info:
+  name: Share Memo
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}external-memos/e3995fb4-3547-491a-b0fd-90fc6e003df0/share"
+  params:
+    - name: status
+      value: completed
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: "{\r
+
+      \  \"email\": \"promisedeco24@gmail.com\",\r
+
+      \  \"message\": \"Making it work\" // optional\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

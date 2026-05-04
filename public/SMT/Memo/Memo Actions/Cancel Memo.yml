@@ -1,0 +1,17 @@
+info:
+  name: Cancel Memo
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}memos/b271f553-825e-45d4-b1da-925fc1f7ed43/cancel"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useNotification } from '../../context/NotificationContext'
+import { identityBaseUrl } from '../../services/api'
 import { FiMail, FiArrowLeft, FiCheck } from 'react-icons/fi'
 import authImage from "../../assets/Authentication/Auth.jpg"
 import logo from "../../assets/SMTLogowhite.png"
@@ -21,17 +22,14 @@ function ForgotPassword() {
     setLoading(true)
     
     try {
-      const formData = new FormData()
-      formData.append('email', email)
+      const response = await axios.post(`${identityBaseUrl}/forgot-password`, { email })
       
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/reset-password-request`, formData)
-      
-      if (response.data.status) {
-        setEmailSent(true)
-        showNotification(response.data.message, 'success')
+      if (response.data) {
+        showNotification('OTP sent to your email', 'success')
+        navigate('/reset-password', { state: { email } })
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to send reset email. Please try again.'
+      const message = error.response?.data?.message || 'Failed to send OTP. Please try again.'
       showNotification(message, 'error')
     } finally {
       setLoading(false)
@@ -42,75 +40,7 @@ function ForgotPassword() {
     navigate('/login')
   }
 
-  if (emailSent) {
-    return (
-      <div 
-        className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-        style={{
-          backgroundImage: `linear-gradient(rgba(1, 24, 35, 0.98), rgba(1, 24, 35, 0.95)), url(${authImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        <div className="relative z-10 w-full max-w-sm">
-          {/* Check Email Card */}
-          <div className="bg-white rounded-2xl shadow-2xl p-6">
-            {/* Success Icon */}
-            <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                <FiCheck className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            
-            <h2 className="text-xl font-bold text-gray-900 mb-1 text-center">Check Your Email</h2>
-            <p className="text-center text-gray-600 text-xs mb-4">
-              We've sent password reset instructions to:
-            </p>
-            
-            <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <p className="text-sm font-semibold text-gray-900 text-center">{email}</p>
-            </div>
-            
-            {/* Next Steps */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Next steps:</h3>
-              <ul className="text-xs text-gray-600 space-y-1">
-                <li>• Check your email inbox (and spam folder)</li>
-                <li>• Click the reset password link</li>
-                <li>• Create a new password</li>
-                <li>• Sign in with your new credentials</li>
-              </ul>
-            </div>
-            
-            {/* Resend Option */}
-            <div className="text-center mb-4">
-              <button 
-                onClick={() => setEmailSent(false)}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Didn't receive the email? Click here to resend
-              </button>
-            </div>
-            
-            {/* Back to Login */}
-            <button
-              onClick={handleBackToLogin}
-              className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 rounded-lg transition-colors duration-200 text-sm"
-            >
-              <FiArrowLeft className="w-4 h-4" />
-              Back to Login
-            </button>
-          </div>
-          
-          {/* Footer */}
-          <div className="text-center mt-6">
-            <p className="text-xs text-gray-400">POWERED BY TFN SOLUTIONS</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+
 
   return (
     <div 

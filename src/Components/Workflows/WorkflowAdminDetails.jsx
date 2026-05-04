@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { workflowAPI, roleAPI } from '../../services/api'
+import { departmentAPI, workflowAPI, roleAPI } from '../../services/api'
 
 function WorkflowAdminDetails() {
   const { id } = useParams()
@@ -10,6 +10,7 @@ function WorkflowAdminDetails() {
   const { showNotification } = useNotification()
   const [workflow, setWorkflow] = useState(null)
   const [roles, setRoles] = useState([])
+  const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -19,9 +20,10 @@ function WorkflowAdminDetails() {
       setLoading(true)
       setError(null)
       try {
-        const [wfResp, roleResp] = await Promise.all([
+        const [wfResp, roleResp, departmentsResp] = await Promise.all([
           workflowAPI.getWorkflow(id, token),
-          roleAPI.getRoles(token)
+          roleAPI.getRoles(token),
+          departmentAPI.getDepartments(token)
         ])
         if (wfResp?.status && wfResp?.data) {
           setWorkflow(wfResp.data)
@@ -30,6 +32,9 @@ function WorkflowAdminDetails() {
         }
         if (roleResp?.status && roleResp?.data?.data) {
           setRoles(roleResp.data.data)
+        }
+        if (departmentsResp?.status && departmentsResp?.data?.data) {
+          setDepartments(departmentsResp.data.data)
         }
       } catch (err) {
         console.error('Error loading workflow admin details:', err)
@@ -40,12 +45,18 @@ function WorkflowAdminDetails() {
       }
     }
     fetchData()
-  }, [id, token])
+  }, [id, showNotification, token])
 
   const getRoleName = (roleId) => {
     if (!Array.isArray(roles) || !roleId) return 'Unknown Role'
     const role = roles.find(r => r.id === roleId)
     return role ? role.name : 'Unknown Role'
+  }
+
+  const getDepartmentName = (departmentId) => {
+    if (!Array.isArray(departments) || !departmentId) return 'Unknown Department'
+    const dept = departments.find(d => d.id === departmentId)
+    return dept ? dept.name : 'Unknown Department'
   }
 
   if (loading) {
@@ -145,6 +156,11 @@ function WorkflowAdminDetails() {
                     {step.required_role && (
                       <span className="px-1 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
                         {getRoleName(step.required_role)}
+                      </span>
+                    )}
+                    {step.required_department_id && (
+                      <span className="px-1 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                        {getDepartmentName(step.required_department_id)}
                       </span>
                     )}
                   </div>

@@ -23,7 +23,8 @@ function ActivityLogs() {
   const fetchActivityLogs = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`/settings-api/logs?per_page=${perPage}&page=${currentPage}`, {
+      const baseURL = import.meta.env.VITE_SETTINGS_API_BASE_URL || '/settings-api'
+      const response = await axios.get(`${baseURL}/logs?per_page=${perPage}&page=${currentPage}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

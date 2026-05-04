@@ -1,0 +1,26 @@
+info:
+  name: Delete Perm
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: "{{LOCAL_BASE_URL}}permissions/019a25c1-5f66-7206-9efc-f0a7701a1b56"
+  body:
+    type: multipart-form
+    data:
+      - name: name
+        type: text
+        value: Create mem
+      - name: description
+        type: text
+        value: Creating momos
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

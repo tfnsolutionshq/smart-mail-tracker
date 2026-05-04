@@ -1,0 +1,17 @@
+info:
+  name: Users By Role
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{LOCAL_BASE_URL}}users/roles/019abf45-668a-73ec-a37f-0a7a2e640d82"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

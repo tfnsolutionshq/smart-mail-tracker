@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import axios from "axios"
 import { useAuth } from "../../context/AuthContext"
 import { useNotification } from "../../context/NotificationContext"
@@ -44,15 +44,15 @@ export default function AdminDashboard() {
       try {
         const [statsRes, mailboxRes, pendingRes] = await Promise.all([
           axios.get(
-            "http://memo.smt.tfnsolutions.us/api/v1/dashboard/statistics",
+            "https://memo.smt.tfnsolutions.us/api/v1/dashboard/statistics",
             { headers: { Authorization: `Bearer ${token}` } }
           ),
           axios.get(
-            "http://memo.smt.tfnsolutions.us/api/v1/dashboard/mailbox-statistics",
+            "https://memo.smt.tfnsolutions.us/api/v1/dashboard/mailbox-statistics",
             { headers: { Authorization: `Bearer ${token}` } }
           ),
           axios.get(
-            "http://memo.smt.tfnsolutions.us/api/v1/dashboard/pending-approvals",
+            "https://memo.smt.tfnsolutions.us/api/v1/dashboard/pending-approvals",
             { headers: { Authorization: `Bearer ${token}` } }
           )
         ])
@@ -105,14 +105,18 @@ export default function AdminDashboard() {
             <p className="text-gray-600 text-sm mt-1">Here's your system overview and administrative insights.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+            <Link to="/compose-memo">
+              <button className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
               <FiEdit3 className="w-4 h-4" />
               Compose Memo
             </button>
-            <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
-              <FiUser className="w-4 h-4" />
-              Manage Users
-            </button>
+            </Link>
+            <Link to="/administration">
+              <button className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                <FiUser className="w-4 h-4" />
+                Manage users
+              </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -180,12 +184,12 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <p className="text-sm text-gray-600 mb-4">Administrative shortcuts</p>
           <div className="space-y-3">
-            <ActionButton icon={FiEdit3} label="New Memo" />
-            <ActionButton icon={FiMail} label="Check Inbox" />
-            <ActionButton icon={FiUser} label="Manage Users" />
-            <ActionButton icon={FiGitBranch} label="Configure Workflows" />
-            <ActionButton icon={FiBarChart2} label="View Reports" />
-            <ActionButton icon={FiSettings} label="System Settings" />
+            <ActionButton icon={FiEdit3} label="New Memo" onClick={() => navigate('/compose-memo')} />
+            <ActionButton icon={FiMail} label="Check Inbox" onClick={() => navigate('/mailbox')} />
+            <ActionButton icon={FiUser} label="Manage Users" onClick={() => navigate('/administration')} />
+            <ActionButton icon={FiGitBranch} label="Configure Workflows" onClick={() => navigate('/workflows')} />
+            <ActionButton icon={FiBarChart2} label="View Reports" onClick={() => navigate('/reports')} />
+            <ActionButton icon={FiSettings} label="System Settings" onClick={() => navigate('/settings')} />
           </div>
         </div>
       </div>
@@ -348,9 +352,12 @@ function StatCard({ icon: Icon, label, value, subtext, color }) {
   )
 }
 
-function ActionButton({ icon: Icon, label }) {
+function ActionButton({ icon: Icon, label, onClick }) {
   return (
-    <button className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-sm font-medium border border-gray-200">
+    <button 
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-sm font-medium border border-gray-200"
+    >
       <Icon className="w-4 h-4 flex-shrink-0" />
       <span>{label}</span>
     </button>

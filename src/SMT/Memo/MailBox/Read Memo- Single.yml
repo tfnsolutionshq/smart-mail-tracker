@@ -1,0 +1,17 @@
+info:
+  name: Read Memo/ Single
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{MEMO_BASE_URL}}mailbox/638ee27f-8c24-4f22-93cc-9ecfc8d78923"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

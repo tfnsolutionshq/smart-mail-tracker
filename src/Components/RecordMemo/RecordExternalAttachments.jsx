@@ -1,14 +1,16 @@
 import React, { useRef, useState } from 'react'
 import { FiArrowLeft, FiChevronRight, FiUpload, FiCheck, FiX } from 'react-icons/fi'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 export default function RecordExternalAttachments() {
   const navigate = useNavigate()
-  const [files, setFiles] = useState([])
+  const location = useLocation()
+  const previousData = location.state || {}
+  const [files, setFiles] = useState(previousData.attachments || [])
   const inputRef = useRef(null)
 
   const handleFiles = (fileList) => {
-    const arr = Array.from(fileList).map((f) => ({ name: f.name, size: f.size, type: f.type }))
+    const arr = Array.from(fileList)
     setFiles((prev) => [...prev, ...arr])
   }
 
@@ -19,6 +21,10 @@ export default function RecordExternalAttachments() {
 
   const onDragOver = (e) => { e.preventDefault() }
   const removeFile = (name) => { setFiles((prev) => prev.filter((f) => f.name !== name)) }
+
+  const handleNext = () => {
+    navigate('/record-external-assignment', { state: { ...previousData, attachments: files } })
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-6">
@@ -72,9 +78,9 @@ export default function RecordExternalAttachments() {
             </div>
           </div>
         </div>
-        <div className="mt-3 w-full bg-gray-200 h-1 rounded-full">
+        {/* <div className="mt-3 w-full bg-gray-200 h-1 rounded-full">
           <div className="bg-black h-1 rounded-full" style={{ width: '50%' }}></div>
-        </div>
+        </div> */}
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
@@ -114,8 +120,8 @@ export default function RecordExternalAttachments() {
         )}
 
         <div className="flex items-center justify-between mt-6">
-          <button className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg" onClick={() => navigate('/record-external-memo')}>Previous</button>
-          <button className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg flex items-center gap-2" onClick={() => navigate('/record-external-assignment')}>
+          <button className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg" onClick={() => navigate('/record-external-memo', { state: { ...previousData, attachments: files } })}>Previous</button>
+          <button className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg flex items-center gap-2" onClick={handleNext}>
             Next
             <FiChevronRight className="w-4 h-4" />
           </button>

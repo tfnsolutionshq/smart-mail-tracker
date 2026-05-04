@@ -1,0 +1,32 @@
+info:
+  name: Create Department
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}departments"
+  body:
+    type: multipart-form
+    data:
+      - name: name
+        type: text
+        value: Computer Science
+      - name: department_code
+        type: text
+        value: IT
+      - name: head_id
+        type: text
+        value: 443e0561-7194-4094-89f5-07e84f18bf20
+      - name: description
+        type: text
+        value: Computing
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

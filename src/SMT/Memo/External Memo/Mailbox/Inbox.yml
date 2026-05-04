@@ -1,0 +1,30 @@
+info:
+  name: Inbox
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{MEMO_BASE_URL}}external-memos/inbox?per page=5&search=EXT-&date_from=2025-01-01&date_to=2026-03-31"
+  params:
+    - name: per page
+      value: "5"
+      type: query
+    - name: search
+      value: EXT-
+      type: query
+    - name: date_from
+      value: 2025-01-01
+      type: query
+    - name: date_to
+      value: 2026-03-31
+      type: query
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

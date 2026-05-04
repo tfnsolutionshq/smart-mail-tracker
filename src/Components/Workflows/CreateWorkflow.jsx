@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { FiArrowLeft, FiPlay, FiSave, FiPlus, FiCheck, FiEye, FiClock, FiBell, FiGitBranch, FiEdit, FiTrash2 } from 'react-icons/fi'
+import React, { useState, useEffect, useCallback } from 'react'
+import { FiArrowLeft, FiSave, FiPlus, FiCheck, FiEye, FiBell, FiEdit, FiTrash2 } from 'react-icons/fi'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
@@ -13,7 +13,7 @@ function CreateWorkflow() {
   const { token } = useAuth()
   const { showNotification } = useNotification()
   const isEditing = !!id
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [workflowName, setWorkflowName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
@@ -50,12 +50,6 @@ function CreateWorkflow() {
       name: 'Notification',
       description: 'Send notification to specified roles',
       icon: FiBell
-    },
-    {
-      id: 'condition',
-      name: 'Condition',
-      description: 'Conditional branching based on criteria',
-      icon: FiGitBranch
     }
   ]
 
@@ -78,7 +72,7 @@ function CreateWorkflow() {
     setWorkflowSteps(workflowSteps.filter(step => step.id !== stepId))
   }
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const promises = [
         categoryAPI.getCategories(token),
@@ -111,7 +105,8 @@ function CreateWorkflow() {
           id: step.id || `step-${index}`,
           name: step.name,
           assignedRole: step.required_role,
-          timeLimit: step.time_limit.toString(),
+          requiredDepartmentId: step.required_department_id || '',
+          timeLimit: step.time_limit != null ? String(step.time_limit) : '',
           description: step.description,
           type: step.type.toLowerCase()
         }))
@@ -121,11 +116,11 @@ function CreateWorkflow() {
       console.error('Error fetching data:', error)
       showNotification('Failed to fetch data', 'error')
     }
-  }
+  }, [id, isEditing, showNotification, token])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
   const addFeature = () => {
     setKeyFeatures([...keyFeatures, ''])
@@ -155,15 +150,23 @@ function CreateWorkflow() {
         key_features: keyFeatures.filter(f => f.trim()),
         category_id: parseInt(category),
         is_active: true,
-        steps: workflowSteps.map((step, index) => ({
-          name: step.name,
-          required_role: step.assignedRole,
-          order: index + 1,
-          time_limit: parseInt(step.timeLimit) || 48,
-          description: step.description || '',
-          type: step.type.charAt(0).toUpperCase() + step.type.slice(1),
-          is_final: index === workflowSteps.length - 1
-        }))
+        steps: workflowSteps.map((step, index) => {
+          const stepPayload = {
+            name: step.name,
+            required_role: step.assignedRole,
+            order: index + 1,
+            time_limit: parseInt(step.timeLimit) || 48,
+            description: step.description || '',
+            type: step.type.charAt(0).toUpperCase() + step.type.slice(1),
+            is_final: index === workflowSteps.length - 1
+          }
+
+          if (step.requiredDepartmentId) {
+            stepPayload.required_department_id = step.requiredDepartmentId
+          }
+
+          return stepPayload
+        })
       }
 
       const response = isEditing 
@@ -209,10 +212,6 @@ function CreateWorkflow() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            <button className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 text-gray-700 border border-gray-300 rounded hover:bg-gray-50 text-xs">
-              <FiPlay className="w-3 h-3" />
-              <span className="hidden md:inline">Test</span>
-            </button>
             <button 
               onClick={handleSaveWorkflow}
               disabled={loading}

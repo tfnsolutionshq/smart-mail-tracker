@@ -1,0 +1,30 @@
+info:
+  name: Force Default Pwd Change
+  type: http
+  seq: 17
+
+http:
+  method: POST
+  url: "{{identity_base_url}}force-change-password"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"user_id\": \"019abf45-9f3e-70b9-a1ef-dbc8dec13601\",\r
+
+      \  \"old_password\": \"88888888\",\r
+
+      \  \"password\": \"password\",\r
+
+      \  \"password_confirmation\": \"password\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

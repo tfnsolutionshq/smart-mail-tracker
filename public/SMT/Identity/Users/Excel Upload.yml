@@ -1,0 +1,24 @@
+info:
+  name: Excel Upload
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}users/bulk-upload"
+  body:
+    type: multipart-form
+    data:
+      - name: file
+        type: file
+        value:
+          - TZ-rvXCbq/Contact List Generation and Formatting.xlsx
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

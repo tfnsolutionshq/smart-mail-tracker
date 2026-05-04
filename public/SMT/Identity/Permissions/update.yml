@@ -1,0 +1,21 @@
+info:
+  name: update
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{LOCAL_BASE_URL}}permissions/019a25ae-33f6-7249-b9b9-104fa55aa7ae?name=Create Memo"
+  params:
+    - name: name
+      value: Create Memo
+      type: query
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

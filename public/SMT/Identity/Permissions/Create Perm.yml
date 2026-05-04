@@ -1,0 +1,26 @@
+info:
+  name: Create Perm
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}permissions"
+  body:
+    type: multipart-form
+    data:
+      - name: name
+        type: text
+        value: Create Users
+      - name: description
+        type: text
+        value: Can create any user level
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

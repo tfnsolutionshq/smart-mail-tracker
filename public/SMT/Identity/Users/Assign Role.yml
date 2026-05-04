@@ -1,0 +1,32 @@
+info:
+  name: Assign Role
+  type: http
+  seq: 19
+
+http:
+  method: PUT
+  url: "{{LOCAL_BASE_URL}}users/019b220e-1fcc-7271-8437-0eb52ed7c155/assign-role?role_id=019abf45-9d62-7374-abcf-5f0e9b6b5778"
+  params:
+    - name: role_id
+      value: 019abf45-9d62-7374-abcf-5f0e9b6b5778
+      type: query
+  body:
+    type: json
+    data: "{\r
+
+      \  \"current_password\": \"oldpassword\",\r
+
+      \  \"new_password\": \"newpassword\",\r
+
+      \  \"new_password_confirmation\": \"newpassword\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

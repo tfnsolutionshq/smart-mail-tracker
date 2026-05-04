@@ -1,0 +1,28 @@
+info:
+  name: Reset Pass
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}reset-password-otp"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"email\": \"promisedeco24@gmail.com\",\r
+
+      \  \"otp\": \"083519\",\r
+
+      \  \"password\": \"12345678\",\r
+
+      \  \"password_confirmation\": \"12345678\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

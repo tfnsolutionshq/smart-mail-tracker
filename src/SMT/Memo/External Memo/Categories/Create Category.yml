@@ -1,0 +1,28 @@
+info:
+  name: Create Category
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}external-categories"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"name\": \"Budget Requests\",\r
+
+      \  \"description\": \"All budget related memos\",\r
+
+      \  \"is_active\": true\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import axios from "axios"
-import { userAPI } from "../../services/api"
+import { userAPI, identityStorageBase } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
 import { useNotification } from "../../context/NotificationContext"
 import { FiArrowLeft } from "react-icons/fi"
@@ -24,10 +24,10 @@ export default function UserMemos() {
     try {
       const [userRes, inboxRes, sentRes] = await Promise.all([
         userAPI.getUserById(userId, token),
-        axios.get(`http://memo.smt.tfnsolutions.us/api/v1/admin/users/${userId}/memos/inbox`, {
+        axios.get(`https://memo.smt.tfnsolutions.us/api/v1/admin/users/${userId}/memos/inbox`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`http://memo.smt.tfnsolutions.us/api/v1/admin/users/${userId}/memos/sent`, {
+        axios.get(`https://memo.smt.tfnsolutions.us/api/v1/admin/users/${userId}/memos/sent`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ])
@@ -68,7 +68,7 @@ export default function UserMemos() {
           <div className="flex items-center gap-4">
             {user?.avatar ? (
               <img
-                src={`https://identity.smt.tfnsolutions.us/storage/${user.avatar}`}
+                src={`${identityStorageBase}/storage/${user.avatar}`}
                 alt={user.first_name}
                 className="w-16 h-16 rounded-full object-cover"
               />

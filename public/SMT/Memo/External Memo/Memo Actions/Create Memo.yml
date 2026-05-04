@@ -1,0 +1,58 @@
+info:
+  name: Create Memo
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}external-memos"
+  body:
+    type: multipart-form
+    data:
+      - name: subject
+        type: text
+        value: This is the meo
+      - name: sender_organization
+        type: text
+        value: TFN Solutuons
+      - name: sender_contact
+        type: text
+        value: promisedeco24@gmail.com
+      - name: date_received
+        type: text
+        value: 2025-12-18
+      - name: priority
+        type: text
+        value: Medium
+      - name: category
+        type: text
+        value: Emergency
+      - name: description
+        type: text
+        value: Testing external memo
+      - name: department_id
+        type: text
+        value: 019abf45-6675-71a4-a92c-50e51b46e0ff
+      - name: assigned_officer_id
+        type: text
+        value: 019b1256-73b0-70dd-89db-86cd0022efc3
+      - name: assignment_remarks
+        type: text
+        value: This is going to work
+      - name: attachments[]
+        type: file
+        value:
+          - /C:/Users/HomePC/Pictures/icons/11654460.png
+      - name: reference_number
+        type: text
+        value: ABC123HJ094
+        disabled: true
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { FiCamera } from 'react-icons/fi'
+import { identityBaseUrl, identityStorageBase } from '../../services/api'
+import { FiCamera, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 
 function UpdateProfile() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { token, user } = useAuth()
   const { showNotification } = useNotification()
   const [userData, setUserData] = useState(null)
@@ -20,6 +23,17 @@ function UpdateProfile() {
   const [language, setLanguage] = useState('')
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
+  const [activeTab, setActiveTab] = useState(() =>
+    searchParams.get('tab') === 'security' ? 'security' : 'profile'
+  )
+
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     if (token && user?.id) {
@@ -27,11 +41,14 @@ function UpdateProfile() {
     }
   }, [token, user?.id])
 
+  useEffect(() => {
+    setActiveTab(searchParams.get('tab') === 'security' ? 'security' : 'profile')
+  }, [searchParams])
+
   const fetchUserData = async () => {
     setFetching(true)
     try {
-      const base = (import.meta.env.VITE_IDENTITY_BASE_URL || 'http://identity.smt.tfnsolutions.us/api/v1').replace(/\/$/, '')
-      const response = await axios.get(`${base}/users/${user.id}`, {
+      const response = await axios.get(`${identityBaseUrl}/users/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (response.data.status && response.data.data) {
@@ -70,9 +87,7 @@ function UpdateProfile() {
     if (signatureFile) formData.append('signature', signatureFile)
     setLoading(true)
     try {
-      const base = (import.meta.env.VITE_IDENTITY_BASE_URL || 'http://identity.smt.tfnsolutions.us/api/v1').replace(/\/$/, '')
-      const url = `${base}/profile`
-      const resp = await axios.post(url, formData, {
+      await axios.post(`${identityBaseUrl}/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` },
         maxBodyLength: Infinity
       })
@@ -82,6 +97,60 @@ function UpdateProfile() {
       showNotification(error.response?.data?.message || 'Failed to update profile', 'error')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    if (!token) {
+      showNotification('Missing auth token', 'error')
+      return
+    }
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showNotification('Please fill in all password fields', 'error')
+      return
+    }
+    if (newPassword.length < 8) {
+      showNotification('New password must be at least 8 characters', 'error')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      showNotification('New passwords do not match', 'error')
+      return
+    }
+
+    setPasswordLoading(true)
+    try {
+      await axios.post(
+        `${identityBaseUrl}/change-password`,
+        {
+          current_password: currentPassword,
+          new_password: newPassword,
+          new_password_confirmation: confirmPassword
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          maxBodyLength: Infinity
+        }
+      )
+      showNotification('Password updated successfully', 'success')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setShowCurrentPassword(false)
+      setShowNewPassword(false)
+      setShowConfirmPassword(false)
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Failed to update password'
+      showNotification(message, 'error')
+    } finally {
+      setPasswordLoading(false)
     }
   }
 
@@ -95,10 +164,46 @@ function UpdateProfile() {
 
   return (
     <div className="max-w-6xl mx-auto p-5">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-        <p className="text-sm text-gray-600">Manage your profile information and preferences</p>
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Profile Settings</h1>
+        <p className="text-sm text-gray-600">Manage your profile information, security and preferences</p>
       </div>
+
+      {/* Tabs */}
+      <div className="mb-6">
+        <nav className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-xs sm:text-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('profile')
+              setSearchParams({}, { replace: true })
+            }}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-colors ${
+              activeTab === 'profile'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            Profile
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('security')
+              setSearchParams({ tab: 'security' }, { replace: true })
+            }}
+            className={`ml-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium transition-colors ${
+              activeTab === 'security'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            Security
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'profile' && (
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Photo Section */}
         <div className="lg:col-span-1">
@@ -112,7 +217,7 @@ function UpdateProfile() {
                   {avatarFile ? (
                     <img src={URL.createObjectURL(avatarFile)} alt="Avatar" className="w-full h-full rounded-full object-cover" />
                   ) : userData?.avatar ? (
-                    <img src={`https://identity.smt.tfnsolutions.us/storage/${userData.avatar}`} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                    <img src={`${identityStorageBase}/storage/${userData.avatar}`} alt="Avatar" className="w-full h-full rounded-full object-cover" />
                   ) : (
                     (userData?.first_name?.[0] || 'U').toUpperCase()
                   )}
@@ -154,7 +259,7 @@ function UpdateProfile() {
               {(signatureFile || userData?.signature) && (
                 <div className="mt-3">
                   <img 
-                    src={signatureFile ? URL.createObjectURL(signatureFile) : `https://identity.smt.tfnsolutions.us/storage/${userData.signature}`} 
+                    src={signatureFile ? URL.createObjectURL(signatureFile) : `${identityStorageBase}/storage/${userData.signature}`} 
                     alt="Signature" 
                     className="h-20 object-contain border rounded" 
                   />
@@ -286,6 +391,104 @@ function UpdateProfile() {
           </div>
         </div>
       </form>
+      )}
+
+      {activeTab === 'security' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg border p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-1">Change Password</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Update your account password. Make sure it is strong and unique.
+              </p>
+
+              <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Current password
+                  </label>
+                  <div className="relative">
+                    <FiLock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-black focus:border-transparent"
+                      placeholder="Enter current password"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    >
+                      {showCurrentPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New password
+                  </label>
+                  <div className="relative">
+                    <FiLock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-black focus:border-transparent"
+                      placeholder="At least 8 characters"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    >
+                      {showNewPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm new password
+                  </label>
+                  <div className="relative">
+                    <FiLock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-black focus:border-transparent"
+                      placeholder="Re-enter new password"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    >
+                      {showConfirmPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-start gap-3">
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="px-4 py-2 bg-black text-white rounded text-sm hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {passwordLoading ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

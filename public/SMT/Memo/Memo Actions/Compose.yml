@@ -1,0 +1,48 @@
+info:
+  name: Compose
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}memos"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"subject\": \"Test In App 23\",\r
+
+      \  \"body\": \"This is body\", \r
+
+      \  \"category_id\": \"1\",\r
+
+      \  \"priority\": \"high\",\r
+
+      \  \"status\": \"sent\",\r
+
+      \  \"reference_id\": \"CUS-A31JHKJ823\", \r
+
+      \  \"recipients\": [\r
+
+      \    {\r
+
+      \      \"recipient_id\": \"019bf980-9ae1-7153-85e6-9d27fa883135\",\r
+
+      \      \"recipient_type\": \"to\",\r
+
+      \      \"recipient_role\": \"019abf48-f39d-714a-8302-690993b29f24\"\r
+
+      \    }\r
+
+      \  ]\r
+
+      }\r\n"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,43 @@
+info:
+  name: Get List
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{MEMO_BASE_URL}}workflows?estimated_time_min=10&estimated_time_max=15&category=Internal memo"
+  params:
+    - name: search
+      value: Clearance%20Leave
+      type: query
+      disabled: true
+    - name: category_id
+      value: 019ac9fa-6931-738a-bac8-7ab484c67265
+      type: query
+      disabled: true
+    - name: roles
+      value: 019abf45-668a-73ec-a37f-0a7a2e640d82,019abf45-6685-7350-aaa6-3b69e7998664
+      type: query
+      disabled: true
+    - name: estimated_time_min
+      value: "10"
+      type: query
+    - name: estimated_time_max
+      value: "15"
+      type: query
+    - name: type
+      value: draft
+      type: query
+      disabled: true
+    - name: category
+      value: Internal memo
+      type: query
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

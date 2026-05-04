@@ -1,0 +1,24 @@
+info:
+  name: Assign Users To Dept.
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}users/assign-to-department"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"user_ids\": [\"019bdb26-da39-714b-a19f-303a5c606c78\"]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

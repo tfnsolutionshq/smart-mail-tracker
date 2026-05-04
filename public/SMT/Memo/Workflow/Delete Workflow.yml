@@ -1,0 +1,56 @@
+info:
+  name: Delete Workflow
+  type: http
+  seq: 7
+
+http:
+  method: DELETE
+  url: "{{MEMO_BASE_URL}}workflows/019a58f9-0ffa-738c-bb27-48b29e9ea546"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Updated Purchase Approval\",\r
+
+      \    \"description\": \"Updated workflow for purchase approvals\",\r
+
+      \    \"is_active\": true,\r
+
+      \    \"steps\": [\r
+
+      \        {\r
+
+      \            \"name\": \"Team Lead Review\",\r
+
+      \            \"required_role\": \"department_head\",\r
+
+      \            \"order\": 1,\r
+
+      \            \"is_final\": false\r
+
+      \        },\r
+
+      \        {\r
+
+      \            \"name\": \"Finance Approval\",\r
+
+      \            \"required_role\": \"dean\",\r
+
+      \            \"order\": 2,\r
+
+      \            \"is_final\": true\r
+
+      \        }\r
+
+      \    ]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

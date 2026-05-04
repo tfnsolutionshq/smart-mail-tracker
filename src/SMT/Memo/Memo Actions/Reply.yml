@@ -1,0 +1,42 @@
+info:
+  name: Reply
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}memos/7140fed5-118d-4301-9f32-607ff0804057/reply"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"body\": \"Successfully replied to memo.\",\r
+
+      \    \"subject\": \"Re: Reply to a memo test\"\r
+
+      \    ,\r
+
+      \    \"recipients\": [\r
+
+      \        {\r
+
+      \            \"recipient_id\": \"2e160ea0-a953-45ea-9090-f6b3243b6526\",\r
+
+      \            \"recipient_type\": \"cc\", \r
+
+      \            \"recipient_role\": \"admin\"\r
+
+      \        }\r
+
+      \    ]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

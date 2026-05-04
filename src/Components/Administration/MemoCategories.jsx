@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { FiSearch, FiPlus, FiMoreVertical, FiPower, FiEye, FiTrash2 } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
 import { categoryAPI } from '../../services/api'
 import AddCategory from './AddCategory'
 import EditCategory from './EditCategory'
-import axios from 'axios'
 
 function MemoCategories() {
   const [showCategoryMenu, setShowCategoryMenu] = useState(null)
@@ -20,6 +19,7 @@ function MemoCategories() {
   const [categoryToToggle, setCategoryToToggle] = useState(null)
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(false)
+  const categoryMenuRef = useRef(null)
   const { token } = useAuth()
   const { showNotification } = useNotification()
 
@@ -42,6 +42,17 @@ function MemoCategories() {
     fetchCategories()
   }, [])
 
+  // Close category menu on outside click
+  useEffect(() => {
+    if (!showCategoryMenu) return
+    const handleMouseDown = (e) => {
+      if (categoryMenuRef.current && categoryMenuRef.current.contains(e.target)) return
+      setShowCategoryMenu(null)
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [showCategoryMenu])
+
   const getIcon = (name) => {
     const icons = {
       'Internal memo': '📝',
@@ -53,17 +64,26 @@ function MemoCategories() {
     return icons[name] || '📄'
   }
 
-  const activeCategories = categories.filter(cat => cat.is_active).length
+  const filteredCategories = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase()
+    return categories.filter((cat) => {
+      const matchesSearch =
+        !q ||
+        (cat.name && cat.name.toLowerCase().includes(q)) ||
+        (cat.description && String(cat.description).toLowerCase().includes(q))
+      const matchesStatus =
+        statusFilter === 'All Statuses' ||
+        (statusFilter === 'Active' && cat.is_active) ||
+        (statusFilter === 'Inactive' && !cat.is_active)
+      return matchesSearch && matchesStatus
+    })
+  }, [categories, searchTerm, statusFilter])
 
   const handleToggleStatus = async () => {
     try {
-      const response = await axios.post(`/memo-api/categories/${categoryToToggle.id}/toggle-status`, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await categoryAPI.toggleCategoryStatus(categoryToToggle.id, token)
       
-      if (response.data.status || response.status === 200) {
+      if (response.status) {
         const action = categoryToToggle.is_active ? 'deactivated' : 'activated'
         showNotification(`Category ${action} successfully`, 'success')
         fetchCategories()
@@ -80,19 +100,9 @@ function MemoCategories() {
 
   const handleDeleteCategory = async () => {
     try {
-      const response = await axios.delete(`/memo-api/categories/${categoryToDelete.id}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        data: {
-          name: categoryToDelete.name,
-          description: categoryToDelete.description,
-          is_active: categoryToDelete.is_active
-        }
-      })
+      const response = await categoryAPI.deleteCategory(categoryToDelete.id, token)
       
-      if (response.data.status || response.status === 200) {
+      if (response.status) {
         showNotification('Category deleted successfully', 'success')
         fetchCategories()
       }
@@ -124,11 +134,11 @@ function MemoCategories() {
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-xs"
+            className="px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white"
           >
-            <option>All Statuses</option>
-            <option>Active</option>
-            <option>Inactive</option>
+            <option value="All Statuses">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
           </select>
           <button 
             onClick={() => setShowAddCategory(true)}
@@ -140,53 +150,15 @@ function MemoCategories() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600">Total Categories</p>
-              <p className="text-xl font-bold text-gray-900">{categories.length}</p>
-            </div>
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600">Active Categories</p>
-              <p className="text-xl font-bold text-gray-900">{activeCategories}</p>
-            </div>
-            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600">Inactive Categories</p>
-              <p className="text-xl font-bold text-gray-900">{categories.length - activeCategories}</p>
-            </div>
-            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Categories Header */}
       <div className="mb-4">
         <h2 className="text-base font-semibold text-gray-900 mb-1">Memo Categories</h2>
-        <p className="text-xs text-gray-600">Manage categories for organizing memos ({categories.length} categories)</p>
+        <p className="text-xs text-gray-600">
+          Manage categories for organizing memos
+          {filteredCategories.length === categories.length
+            ? ` (${categories.length} categories)`
+            : ` (${filteredCategories.length} of ${categories.length} match)`}
+        </p>
       </div>
 
       {/* Categories List */}
@@ -196,7 +168,12 @@ function MemoCategories() {
         </div>
       ) : (
         <div className="space-y-3">
-          {categories.map((category) => (
+          {filteredCategories.length === 0 ? (
+            <div className="text-center py-12 text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg">
+              No categories match your search or filters.
+            </div>
+          ) : (
+            filteredCategories.map((category) => (
             <div key={category.id} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
@@ -206,11 +183,11 @@ function MemoCategories() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-sm font-medium text-gray-900">{category.name}</h3>
-                      {category.internal_value && (
+                      {/* {category.internal_value && (
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {category.internal_value}
                         </span>
-                      )}
+                      )} */}
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         category.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                       }`}>
@@ -242,7 +219,10 @@ function MemoCategories() {
                       Activate
                     </button>
                   ) : (
-                    <div className="relative">
+                    <div
+                      className="relative"
+                      ref={showCategoryMenu === category.id ? categoryMenuRef : null}
+                    >
                       <button
                         onClick={() => setShowCategoryMenu(showCategoryMenu === category.id ? null : category.id)}
                         className="p-1 hover:bg-gray-100 rounded"
@@ -292,7 +272,8 @@ function MemoCategories() {
                 </div>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
       )}
 

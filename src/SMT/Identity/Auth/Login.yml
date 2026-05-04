@@ -1,0 +1,80 @@
+info:
+  name: Login
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{identity_base_url}}login"
+  headers:
+    - name: X-XSRF-TOKEN
+      value: eyJpdiI6IkdUWUVZR2JtTFM0dDNKSzE5UWhpQ3c9PSIsInZhbHVlIjoiM2hVQXJBRGYwbytHSFpJWlFsUHE1Y2tlK3VKZUw1cnR0VXB2cXQvYlFRQW1FUXZWRi95OUgrMFlVL2ZFSXp6dFZxUmJZdVV3djllZ1crc3VxTVQ2SEFQZXBzaE9pbXd5SU5hem1HSWVQU0tFeGN3S3IzSCt5Q1RtTXloUjBlaU0iLCJtYWMiOiI4Yjc0MzYzZjY0MTc3NzcwMzBjZTNjMzMyOTllN2FiMmNkMmFjZDkzNThkNzI1NGM3ZDlmNmY1MzJhOWY2ZGJmIiwidGFnIjoiIn0%3D
+      disabled: true
+    - name: Cookie
+      value: XSRF-TOKEN=eyJpdiI6ImVyWFZ4bXdhekJlYXh0S1NxaHN2SXc9PSIsInZhbHVlIjoia1ZieEtsKzZsbUZvL01BR3VKRFl6SnRhYTQ5UWJPSU1MSzdyNEJVdTVzYm9UTVNJNU1WT1FNSTNkTkRqREdYaVVRalBORk1jakJkRGcyVFl2YWVsWVpuSU9VUitGS0hiTk9Ob0dMMWZwblhaajZNRjdXT0Y2YVRzWi9kd0QzVGMiLCJtYWMiOiI5M2E2NjViNWNmMTVmZDQyY2YxZmE1NThmMWY4NjQ2ZTMyNGY4YjEyNGI2MzJjODAxYzZmZDAzNWYxNmI3NmU4IiwidGFnIjoiIn0%3D; smt-session=eyJpdiI6IllpeVFiNmpNRG0yQ0YwcVVjMGRlMlE9PSIsInZhbHVlIjoiWHdDWXk3RTR1NFF4NU1kemtaWmhEQnhMOTZyZU9yMldzYnMzcGVLWUFWUWdwYnh5OE8vQmdaRmxFOFZsemZvNVFaM1Brc004RlRiTjcrTUxhUkhVS2FMNllybk95bGNacHVVM3h4MFNxTzNEZ3A5N1daQVdVaEc4L3FvZjFqcW4iLCJtYWMiOiIwNTA1MDI5ZjRhOTFjMzU3NjhmOTlhYTY2ZDljMTNkODA2NmYxMWIxYTVkMDFlNTY5OGM5N2FkOTc3NzhiZDZlIiwidGFnIjoiIn0%3D
+      disabled: true
+    - name: Referer
+      value: https://smt.tfnsolutions.us
+      disabled: true
+    - name: Content-Type
+      value: application/json
+      disabled: true
+    - name: Accept
+      value: application/json
+      disabled: true
+  body:
+    type: json
+    data: "// admin\r
+
+      {\r
+
+      \    // \"email\": \"elexispd@gmail.com\",\r
+
+      \    \"email\": \"promisedeco24@gmail.com\",\r
+
+      \    \"password\": \"password\"\r
+
+      }\r
+
+      \r
+
+      // department head\r
+
+      // {\r
+
+      //     \"email\": \"elexispd@gmail.com\",\r
+
+      //     \"password\": \"88888888\"\r
+
+      // }\r
+
+      \r
+
+      // member user\r
+
+      // {\r
+
+      //     \"email\": \"promise.o@tfnsolutions.us\",\r
+
+      //     \"password\": \"password\"\r
+
+      // }\r
+
+      // {\r
+
+      //     \"email\": \"eben@gmail.com\",\r
+
+      //     \"password\": \"password123\"\r
+
+      // }\r
+
+      \r
+
+      \r\n"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

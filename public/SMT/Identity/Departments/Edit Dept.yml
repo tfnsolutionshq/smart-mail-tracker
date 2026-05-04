@@ -1,0 +1,33 @@
+info:
+  name: Edit Dept.
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{identity_base_url}}departments/019abf45-6675-71a4-a92c-50e51b46e0ff?name=Computer Science&department_code=CSCd&head_id=443e0561-7194-4094-89f5-07e84f18bf20&description=Computing&department_id=019abf45-6675-71a4-a92c-50e51b46e0ff"
+  params:
+    - name: name
+      value: Computer Science
+      type: query
+    - name: department_code
+      value: CSCd
+      type: query
+    - name: head_id
+      value: 443e0561-7194-4094-89f5-07e84f18bf20
+      type: query
+    - name: description
+      value: Computing
+      type: query
+    - name: department_id
+      value: 019abf45-6675-71a4-a92c-50e51b46e0ff
+      type: query
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

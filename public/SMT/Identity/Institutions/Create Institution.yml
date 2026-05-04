@@ -1,0 +1,38 @@
+info:
+  name: Create Institution
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}institutes"
+  body:
+    type: multipart-form
+    data:
+      - name: name
+        type: text
+        value: Nnamdi Azikiwe University
+      - name: country
+        type: text
+        value: Nigeria
+      - name: state
+        type: text
+        value: Anambra
+      - name: city
+        type: text
+        value: Awka
+      - name: address
+        type: text
+        value: P.O BOX 2013 Enugu-Onitsha Express Road
+      - name: code
+        type: text
+        value: SMT54321
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

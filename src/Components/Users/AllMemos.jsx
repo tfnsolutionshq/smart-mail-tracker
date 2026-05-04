@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
+import { identityStorageBase } from '../../services/api'
 import { FiArrowLeft, FiMail } from 'react-icons/fi'
 
 export default function AllMemos() {
@@ -100,7 +101,7 @@ export default function AllMemos() {
                             <div className="flex items-center gap-1">
                               {memo.sender.avatar ? (
                                 <img 
-                                  src={`https://identity.smt.tfnsolutions.us/storage/${memo.sender.avatar}`}
+                                  src={`${identityStorageBase}/storage/${memo.sender.avatar}`}
                                   alt={memo.sender.name}
                                   className="w-5 h-5 rounded-full object-cover"
                                 />

@@ -1,0 +1,42 @@
+info:
+  name: Forward
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}memos/692a7927-0a0d-44e1-a00e-f6209b714ce1/forward"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"subject\": \"FWD: forrrrr\",\r
+
+      \    \"body\": \"I agree with this proposal\",\r
+
+      \    \r
+
+      \    \"recipients\": [\r
+
+      \        {\r
+
+      \            \"recipient_id\": \"019b220d-4d9d-73eb-9667-cdf8ac228944\",\r
+
+      \            \"recipient_type\": \"cc\", \r
+
+      \            \"recipient_role\": \"019abf48-f39d-714a-8302-690993b29f24\"\r
+
+      \        }\r
+
+      \    ]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

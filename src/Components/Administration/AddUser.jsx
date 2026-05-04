@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { departmentAPI, roleAPI } from '../../services/api'
+import { departmentAPI, roleAPI, userAPI } from '../../services/api'
 import { FiX } from 'react-icons/fi'
 
 function AddUser({ onClose, onSuccess }) {
@@ -49,28 +48,33 @@ function AddUser({ onClose, onSuccess }) {
     
     setLoading(true)
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/register`, {
+      console.log('Submitting user creation...', { hasToken: !!token })
+      
+      const response = await userAPI.createUser({
         first_name: formData.firstName,
         last_name: formData.lastName,
         email: formData.email,
         password: 'password123',
         password_confirmation: 'password123',
-        department_id: formData.departmentId,
-        role_id: formData.roleId
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
+        department_id: formData.departmentId || null,
+        role_id: formData.roleId || null
+      }, token)
       
-      if (response.data.status) {
+      console.log('User creation response:', response)
+      
+      if (response.status) {
         showNotification('User created successfully', 'success')
-        onSuccess && onSuccess()
+        if (onSuccess) {
+          await onSuccess()
+        }
         onClose()
+      } else {
+        showNotification(response.message || 'Failed to create user', 'error')
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to create user'
+      console.error('User creation error:', error)
+      console.error('Error response:', error.response?.data)
+      const message = error.response?.data?.message || error.message || 'Failed to create user'
       showNotification(message, 'error')
     } finally {
       setLoading(false)
@@ -132,12 +136,11 @@ function AddUser({ onClose, onSuccess }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role (Optional)</label>
               <select
                 value={formData.roleId}
                 onChange={(e) => setFormData({...formData, roleId: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
               >
                 <option value="">Select role</option>
                 {roles.map(role => (
@@ -146,12 +149,12 @@ function AddUser({ onClose, onSuccess }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Department (Optional)</label>
               <select
                 value={formData.departmentId}
                 onChange={(e) => setFormData({...formData, departmentId: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
+                
               >
                 <option value="">Select department</option>
                 {departments.map(dept => (

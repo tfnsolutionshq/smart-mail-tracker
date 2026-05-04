@@ -1,0 +1,42 @@
+info:
+  name: Set Notification
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{MEMO_BASE_URL}}notification-settings"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"email_approval_requests\": true,\r
+
+      \  \"email_deadline_warnings\": false,\r
+
+      \  \"email_comments_replies\": true,\r
+
+      \  \"email_system_updates\": true,\r
+
+      \  \"push_approval_requests\": false,\r
+
+      \  \"push_deadline_warnings\": true,\r
+
+      \  \"push_comments_replies\": true,\r
+
+      \  \"quiet_hours_from\": \"23:00\",\r
+
+      \  \"quiet_hours_to\": \"06:30\",\r
+
+      \  \"digest_frequency\": \"weekly\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

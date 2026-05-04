@@ -1,0 +1,36 @@
+info:
+  name: Register
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}register"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"first_name\": \"Deco\",\r
+
+      \    \"last_name\": \"Pan\", \r
+
+      \    \"email\": \"deco@mulo.com.ng\",\r
+
+      \    \"password\": \"password\",\r
+
+      \    \"password_confirmation\": \"password\",\r
+
+      \    \"department_id\": \"019abf45-6675-71a4-a92c-50e51b46e0ff\"\r
+
+      \    // \"role_id\": \"019abf45-668a-73ec-a37f-0a7a2e640d82\"\r
+
+      }\r\n"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { FiX, FiCheck, FiEye, FiBell, FiGitBranch, FiPlus } from 'react-icons/fi'
+import React, { useState, useEffect, useCallback } from 'react'
+import { FiX, FiCheck, FiEye, FiBell } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
-import { roleAPI } from '../../services/api'
+import { departmentAPI, roleAPI } from '../../services/api'
 
 function AddStep({ isOpen, onClose, onAddStep }) {
   const { token } = useAuth()
@@ -9,8 +9,10 @@ function AddStep({ isOpen, onClose, onAddStep }) {
   const [stepName, setStepName] = useState('')
   const [description, setDescription] = useState('')
   const [assignedRole, setAssignedRole] = useState('')
+  const [requiredDepartmentId, setRequiredDepartmentId] = useState('')
   const [timeLimit, setTimeLimit] = useState('')
   const [roles, setRoles] = useState([])
+  const [departments, setDepartments] = useState([])
  
   const stepTypes = [
     {
@@ -33,32 +35,33 @@ function AddStep({ isOpen, onClose, onAddStep }) {
       description: 'Send notification to specified roles',
       icon: FiBell,
       color: 'bg-yellow-100 text-yellow-600'
-    },
-    {
-      id: 'condition',
-      name: 'Condition',
-      description: 'Conditional branching based on criteria',
-      icon: FiGitBranch,
-      color: 'bg-purple-100 text-purple-600'
     }
   ]
 
-  const fetchRoles = async () => {
+  const fetchRolesAndDepartments = useCallback(async () => {
     try {
-      const response = await roleAPI.getRoles(token)
-      if (response.status && response.data) {
-        setRoles(response.data.data)
+      const [rolesResponse, departmentsResponse] = await Promise.all([
+        roleAPI.getRoles(token),
+        departmentAPI.getDepartments(token)
+      ])
+
+      if (rolesResponse.status && rolesResponse.data) {
+        setRoles(rolesResponse.data.data)
+      }
+
+      if (departmentsResponse.status && departmentsResponse.data) {
+        setDepartments(departmentsResponse.data.data)
       }
     } catch (error) {
-      console.error('Error fetching roles:', error)
+      console.error('Error fetching roles and departments:', error)
     }
-  }
+  }, [token])
 
   useEffect(() => {
     if (isOpen) {
-      fetchRoles()
+      fetchRolesAndDepartments()
     }
-  }, [isOpen])
+  }, [isOpen, fetchRolesAndDepartments])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -70,6 +73,7 @@ function AddStep({ isOpen, onClose, onAddStep }) {
         name: stepName,
         description,
         assignedRole,
+        requiredDepartmentId,
         timeLimit,
         icon: stepType.icon,
         color: stepType.color
@@ -78,6 +82,7 @@ function AddStep({ isOpen, onClose, onAddStep }) {
       setStepName('')
       setDescription('')
       setAssignedRole('')
+      setRequiredDepartmentId('')
       setTimeLimit('')
       onClose()
     }
@@ -169,6 +174,20 @@ function AddStep({ isOpen, onClose, onAddStep }) {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Required Department (optional)</label>
+                  <select
+                    value={requiredDepartmentId}
+                    onChange={(e) => setRequiredDepartmentId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                  >
+                    <option value="">No department restriction</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-900 mb-1">Time Limit (hours)</label>
                   <input
                     type="number"

@@ -1,0 +1,46 @@
+info:
+  name: Log Action
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{NOTIFY_BASE_URL}}logs"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"user_id\": \"2e160ea0-a953-45ea-9090-f6b3243b6526\",\r
+
+      \    \"institution_id\": \"8b9d49ed-cc27-43fe-afa4-ba852ced165d\",\r
+
+      \    \"service_source\": \"identity-service\",\r
+
+      \    \"action\": \"login\",\r
+
+      \    \"description\": \"User logged again in successfully\",\r
+
+      \    \"properties\": {\r
+
+      \        \"ip_address\": \"192.168.1.100\",\r
+
+      \        \"user_agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\",\r
+
+      \        \"login_method\": \"email_password\",\r
+
+      \        \"device_type\": \"desktop\",\r
+
+      \        \"remember_me\": true\r
+
+      \    }\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
-import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
+import { categoryAPI } from '../../services/api'
 import { FiX } from 'react-icons/fi'
 
 function AddCategory({ onClose, onSuccess }) {
@@ -11,7 +11,7 @@ function AddCategory({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    internal_value: '',
+    // internal_value: '',
     description: '',
     is_active: true
   })
@@ -21,24 +21,26 @@ function AddCategory({ onClose, onSuccess }) {
     setLoading(true)
 
     try {
-      console.log('Sending data:', formData)
-      const response = await axios.post('/memo-api/categories', formData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      console.log('Creating category with data:', formData)
+      console.log('Token available:', !!token)
+      
+      const response = await categoryAPI.createCategory(formData, token)
 
-      console.log('Response:', response.data)
-      if (response.data.status || response.status === 200 || response.status === 201) {
+      console.log('Category creation response:', response)
+      
+      if (response.status) {
         showNotification('Category created successfully', 'success')
-        onSuccess && onSuccess()
+        if (onSuccess) {
+          await onSuccess()
+        }
         onClose()
+      } else {
+        showNotification(response.message || 'Failed to create category', 'error')
       }
     } catch (error) {
       console.error('Error creating category:', error)
       console.error('Error response:', error.response?.data)
-      const errorMessage = error.response?.data?.message || 'Failed to create category'
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create category'
       showNotification(errorMessage, 'error')
     } finally {
       setLoading(false)
@@ -59,34 +61,32 @@ function AddCategory({ onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Category Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Confidential"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Internal Value <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Internal"
-                value={formData.internal_value}
-                onChange={(e) => setFormData({...formData, internal_value: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Category Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., Confidential"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              required
+            />
           </div>
+          {/* <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Internal Value <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., Internal"
+              value={formData.internal_value}
+              onChange={(e) => setFormData({...formData, internal_value: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              required
+            />
+          </div> */}
 
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>

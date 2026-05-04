@@ -1,0 +1,17 @@
+info:
+  name: Mark as complete
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{MEMO_BASE_URL}}external-memos/{id}/status"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

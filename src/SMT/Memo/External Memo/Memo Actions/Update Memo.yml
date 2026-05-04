@@ -1,0 +1,17 @@
+info:
+  name: Update Memo
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{MEMO_BASE_URL}}external-memos/{id}"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

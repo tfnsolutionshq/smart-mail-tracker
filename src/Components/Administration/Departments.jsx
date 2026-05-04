@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { FiMoreVertical, FiEdit, FiUserPlus, FiPower, FiTrash2 } from 'react-icons/fi'
-import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
 import { departmentAPI, userAPI } from '../../services/api'
@@ -16,6 +15,7 @@ function Departments() {
   const [stats, setStats] = useState({ total_departments: 0, active_departments: 0 })
   const [totalUsers, setTotalUsers] = useState(0)
   const [loading, setLoading] = useState(false)
+  const deptMenuRef = useRef(null)
   const { token } = useAuth()
   const { showNotification } = useNotification()
 
@@ -51,14 +51,20 @@ function Departments() {
     fetchData()
   }, [])
 
+  // Close department menu on outside click
+  useEffect(() => {
+    if (!showDeptMenu) return
+    const handleMouseDown = (e) => {
+      if (deptMenuRef.current && deptMenuRef.current.contains(e.target)) return
+      setShowDeptMenu(null)
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [showDeptMenu])
+
   const handleDeleteDepartment = async () => {
     try {
-      const response = await axios.delete(`/api/v1/departments/${departmentToDelete.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
+      await departmentAPI.deleteDepartment(departmentToDelete.id, token)
       showNotification('Department deleted successfully', 'success')
       fetchData()
     } catch (error) {
@@ -140,7 +146,10 @@ function Departments() {
                     {dept.is_active ? 'active' : 'inactive'}
                   </span>
                 </div>
-                <div className="relative">
+                <div
+                  className="relative"
+                  ref={showDeptMenu === dept.id ? deptMenuRef : null}
+                >
                   <button
                     onClick={() => setShowDeptMenu(showDeptMenu === dept.id ? null : dept.id)}
                     className="p-1 hover:bg-gray-100 rounded"

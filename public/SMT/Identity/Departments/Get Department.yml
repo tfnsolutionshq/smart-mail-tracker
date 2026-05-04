@@ -1,0 +1,17 @@
+info:
+  name: Get Department
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{LOCAL_BASE_URL}}departments/019a1660-caea-725f-8b58-be79d997247d"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

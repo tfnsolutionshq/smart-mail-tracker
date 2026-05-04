@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import axios from 'axios'
 import { FiX } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { userAPI } from '../../services/api'
+import { userAPI, departmentAPI } from '../../services/api'
 
 function EditDepartment({ department, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -45,18 +44,22 @@ function EditDepartment({ department, onClose, onSuccess }) {
         department_id: department.id
       })
       
-      const response = await axios.put(`/api/v1/departments/${department.id}?${params.toString()}`, null, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.data.status) {
+      const response = await departmentAPI.updateDepartment(
+        department.id,
+        {
+          name: formData.departmentName,
+          department_code: formData.departmentCode,
+          head_id: formData.departmentHead || '',
+          description: formData.description || ''
+        },
+        token
+      )
+      if (response?.status) {
         showNotification('Department updated successfully', 'success')
         onSuccess?.()
         onClose()
       } else {
-        showNotification(response.data.message || 'Failed to update department', 'error')
+        showNotification(response?.message || 'Failed to update department', 'error')
       }
     } catch (error) {
       console.error('Error updating department:', error)

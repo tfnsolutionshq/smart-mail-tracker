@@ -1,16 +1,28 @@
 import React, { useEffect } from 'react'
 import { FiCheck, FiCopy } from 'react-icons/fi'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useNotification } from '../../context/NotificationContext'
 
 export default function RecordExternalSuccess() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { showNotification } = useNotification()
-  const trackingId = 'EXT-2025-523'
+  const state = location.state || {}
+  
+  // Use data from state or fallbacks
+  const trackingId = state.memo?.tracking_id || state.reference || 'N/A'
+  const reference = state.reference || 'N/A'
+  const senderOrg = state.senderOrg || 'N/A'
+  const category = state.category || 'N/A'
+  const department = state.department || 'N/A'
+  const officer = state.officer || 'N/A'
+  const qrCode = state.memo?.qr_code || state.memo?.qr_code_url
 
   useEffect(() => {
-    showNotification(`Tracking ID: ${trackingId}`, 'success')
-  }, [])
+    if (trackingId !== 'N/A') {
+      showNotification(`Tracking ID: ${trackingId}`, 'success')
+    }
+  }, [trackingId])
 
   const copyId = async () => {
     try {
@@ -40,27 +52,34 @@ export default function RecordExternalSuccess() {
                 Copy
               </button>
             </div>
-            <div className="mt-4 flex justify-center">
-              <div className="w-24 h-24 rounded-lg border border-gray-300 bg-gray-50"></div>
-            </div>
+            {qrCode && (
+              <div className="mt-4 flex justify-center">
+                <img src={qrCode} alt="QR Code" className="w-24 h-24" />
+              </div>
+            )}
+            {!qrCode && (
+              <div className="mt-4 flex justify-center">
+                 <div className="w-24 h-24 rounded-lg border border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-400">No QR</div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6 w-full max-w-3xl">
             <div className="bg-[#F3F3F5] border border-gray-300 rounded-lg px-3 py-2">
               <p className="text-xs text-gray-600">Reference Number</p>
-              <p className="text-sm font-medium text-gray-900">MOE/ADM/123</p>
+              <p className="text-sm font-medium text-gray-900">{reference}</p>
             </div>
             <div className="bg-[#F3F3F5] border border-gray-300 rounded-lg px-3 py-2">
               <p className="text-xs text-gray-600">Sender Organization</p>
-              <p className="text-sm font-medium text-gray-900">TFN</p>
+              <p className="text-sm font-medium text-gray-900">{senderOrg}</p>
             </div>
             <div className="bg-[#F3F3F5] border border-gray-300 rounded-lg px-3 py-2">
               <p className="text-xs text-gray-600">Assigned Department</p>
-              <p className="text-sm font-medium text-gray-900">Academic Affairs</p>
+              <p className="text-sm font-medium text-gray-900">{department}</p>
             </div>
             <div className="bg-[#F3F3F5] border border-gray-300 rounded-lg px-3 py-2">
               <p className="text-xs text-gray-600">Assigned Officer</p>
-              <p className="text-sm font-medium text-gray-900">Dr. Emily Chen</p>
+              <p className="text-sm font-medium text-gray-900">{officer}</p>
             </div>
           </div>
 

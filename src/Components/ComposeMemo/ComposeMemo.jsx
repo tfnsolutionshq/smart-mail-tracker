@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   FiFileText,
   FiUsers,
@@ -37,6 +37,7 @@ export default function ComposeMemo() {
   const { token } = useAuth()
   const { showNotification } = useNotification()
   const [searchParams] = useSearchParams()
+  const editorRef = useRef(null)
   
   const [selectedTemplate, setSelectedTemplate] = useState("")
   const [workflowMode, setWorkflowMode] = useState("template")
@@ -58,6 +59,8 @@ export default function ComposeMemo() {
   // Recipient management
   const [activeTab, setActiveTab] = useState("to")
   const [recipientSearch, setRecipientSearch] = useState("")
+  const [recipientResults, setRecipientResults] = useState([])
+  const [recipientSearching, setRecipientSearching] = useState(false)
   const [selectedRecipients, setSelectedRecipients] = useState([])
   
   // Scheduling
@@ -84,15 +87,13 @@ export default function ComposeMemo() {
   
   const fetchData = async () => {
     try {
-      const [workflowResponse, categoryResponse, userResponse] = await Promise.all([
+      const [workflowResponse, categoryResponse] = await Promise.all([
         workflowAPI.getActiveWorkflows(token),
-        categoryAPI.getCategories(token),
-        userAPI.getUsers({}, token)
+        categoryAPI.getCategories(token)
       ])
       
       if (workflowResponse.status) setWorkflows(workflowResponse.data)
       if (categoryResponse.status) setCategories(categoryResponse.data.data)
-      if (userResponse.status) setUsers(userResponse.data.data)
     } catch (error) {
       console.error('Error fetching data:', error)
       showNotification('Failed to load data', 'error')
@@ -120,10 +121,35 @@ export default function ComposeMemo() {
     setSelectedRecipients(prev => prev.filter((_, i) => i !== index))
   }
   
-  const filteredUsers = users.filter(user => 
-    user.email.toLowerCase().includes(recipientSearch.toLowerCase()) ||
-    `${user.first_name} ${user.last_name}`.toLowerCase().includes(recipientSearch.toLowerCase())
-  )
+  useEffect(() => {
+    if (!token) return
+    const q = recipientSearch.trim()
+    if (q.length < 2) {
+      setRecipientResults([])
+      setRecipientSearching(false)
+      return
+    }
+    let cancelled = false
+    setRecipientSearching(true)
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await userAPI.searchUsers(q, token)
+        if (!cancelled && res?.status && res.data?.data) {
+          setRecipientResults(res.data.data)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('User search failed:', err)
+        }
+      } finally {
+        if (!cancelled) setRecipientSearching(false)
+      }
+    }, 300)
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
+  }, [recipientSearch, token])
   
   const handleSendMemo = async (isDraft = false) => {
     if (!isDraft && (!subject.trim() || !content.trim())) {
@@ -179,7 +205,7 @@ export default function ComposeMemo() {
         formData.append('scheduled_for', new Date(scheduledFor).toISOString())
       }
       
-      const response = await axios.post('http://memo.smt.tfnsolutions.us/api/v1/memos', formData, {
+      const response = await axios.post('https://memo.smt.tfnsolutions.us/api/v1/memos', formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -271,7 +297,7 @@ export default function ComposeMemo() {
       
       // Focus editor and move cursor to end after content is set
       setTimeout(() => {
-        const editor = document.querySelector('[contenteditable]')
+        const editor = editorRef.current
         if (editor) {
           editor.focus()
           const range = document.createRange()
@@ -295,6 +321,15 @@ export default function ComposeMemo() {
       setIsGenerating(false)
     }
   }
+
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor) return
+    if (document.activeElement === editor) return
+    if (editor.innerHTML !== content) {
+      editor.innerHTML = content
+    }
+  }, [content])
 
   return (
     <div className="p-4 sm:p-5 lg:p-5 max-w-7xl mx-auto">
@@ -596,25 +631,14 @@ export default function ComposeMemo() {
             </div>
 
             <div
-              ref={(el) => {
-                if (el && content && !el.textContent) {
-                  el.innerHTML = content
-                  // Move cursor to end
-                  const range = document.createRange()
-                  const sel = window.getSelection()
-                  range.selectNodeContents(el)
-                  range.collapse(false)
-                  sel.removeAllRanges()
-                  sel.addRange(range)
-                }
-              }}
+              ref={editorRef}
               contentEditable
               className="w-full min-h-[200px] p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent overflow-auto"
               style={{ 
                 whiteSpace: 'pre-wrap',
                 lineHeight: '1.6'
               }}
-              onInput={(e) => setContent(e.target.innerHTML)}
+              onInput={(e) => setContent(e.currentTarget.innerHTML)}
               onKeyDown={(e) => {
                 if (e.key === 'Tab') {
                   e.preventDefault()
@@ -727,17 +751,30 @@ export default function ComposeMemo() {
                     
                     {/* User Search Results */}
                     {recipientSearch && (
-                      <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
-                        {filteredUsers.map(user => (
+                      <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg bg-white">
+                        {recipientSearching && (
+                          <div className="p-2 text-xs text-gray-500 text-center">
+                            Searching users...
+                          </div>
+                        )}
+                        {!recipientSearching && recipientResults.length === 0 && (
+                          <div className="p-2 text-xs text-gray-500 text-center">
+                            No users found
+                          </div>
+                        )}
+                        {!recipientSearching && recipientResults.map(user => (
                           <div
                             key={user.id}
                             onClick={() => {
                               addRecipient(user, activeTab)
                               setRecipientSearch("")
+                              setRecipientResults([])
                             }}
                             className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                           >
-                            <div className="font-medium text-sm">{user.first_name} {user.last_name}</div>
+                            <div className="font-medium text-sm">
+                              {user.first_name} {user.middle_name ? user.middle_name + ' ' : ''}{user.last_name}
+                            </div>
                             <div className="text-xs text-gray-600">{user.email}</div>
                           </div>
                         ))}
@@ -935,7 +972,7 @@ export default function ComposeMemo() {
               </button>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Add more context</label>
+              {/* <label className="block text-sm font-medium text-gray-700 mb-1">Add more context</label> */}
               <textarea
                 value={aiContext}
                 onChange={(e) => setAIContext(e.target.value)}

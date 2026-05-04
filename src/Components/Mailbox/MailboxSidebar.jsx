@@ -1,6 +1,31 @@
 import React, { useState } from 'react'
 
-function MailboxSidebar({ isCollapsed, onToggleCollapse, activeView, onViewChange }) {
+function CountPill({ value, variant = 'default', title: titleAttr }) {
+  const n = Number(value) || 0
+  const base = 'text-xs tabular-nums px-1.5 py-0.5 rounded-md min-w-[1.25rem] text-center'
+  const styles =
+    variant === 'unread'
+      ? n > 0
+        ? 'bg-blue-100 text-blue-800 font-medium'
+        : 'bg-gray-100 text-gray-500'
+      : n > 0
+        ? 'bg-gray-200 text-gray-800'
+        : 'bg-gray-100 text-gray-500'
+  return (
+    <span className={`${base} ${styles}`} title={titleAttr}>
+      {n}
+    </span>
+  )
+}
+
+function MailboxSidebar({
+  isCollapsed,
+  onToggleCollapse,
+  activeView,
+  onViewChange,
+  sidebarCounts = {},
+  inboxUnread = 0,
+}) {
   const [showFilters, setShowFilters] = useState(false)
   
   return (
@@ -20,7 +45,7 @@ function MailboxSidebar({ isCollapsed, onToggleCollapse, activeView, onViewChang
         
         {!isCollapsed && (
           <>
-            <div className="relative mb-4">
+            <div className="relative mb-0">
               <input
                 type="text"
                 placeholder="Search memos..."
@@ -31,7 +56,7 @@ function MailboxSidebar({ isCollapsed, onToggleCollapse, activeView, onViewChang
               </svg>
             </div>
             
-            <button 
+            {/* <button 
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center text-sm border border-gray-300 rounded-md px-3 py-2 w-full bg-white text-gray-600 hover:text-gray-800 transition-colors duration-200"
             >
@@ -39,7 +64,7 @@ function MailboxSidebar({ isCollapsed, onToggleCollapse, activeView, onViewChang
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               {showFilters ? 'Hide Filters' : 'Show Filters'}
-            </button>
+            </button> */}
             
             {showFilters && (
               <div className="mb-4 p-3 bg-white rounded-md border border-gray-200 space-y-3 animate-fadeIn">
@@ -111,18 +136,40 @@ function MailboxSidebar({ isCollapsed, onToggleCollapse, activeView, onViewChang
       <nav className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
         <div className="px-4 py-2">
           <button 
+            type="button"
+            title={
+              isCollapsed
+                ? `Inbox · ${inboxUnread} unread`
+                : undefined
+            }
             onClick={() => onViewChange('inbox')}
-            className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} py-2 px-2 rounded text-sm font-medium w-full transition-colors ${
+            className={`relative flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} py-2 px-2 rounded text-sm font-medium w-full transition-colors ${
               activeView === 'inbox' ? 'bg-gray-200' : 'hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center min-w-0">
+              <svg className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? '' : 'mr-2'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2" />
               </svg>
-              {!isCollapsed && 'Inbox'}
+              {!isCollapsed && <span className="truncate">Inbox</span>}
             </div>
-            {!isCollapsed && <span className="bg-white px-2 py-0.5 rounded text-xs">3</span>}
+            {!isCollapsed && (
+              <div className="flex items-center gap-1 flex-shrink-0 ml-1" title="Unread messages">
+                <CountPill value={inboxUnread} variant="unread" title="Unread messages" />
+              </div>
+            )}
+            {isCollapsed && (
+              <span
+                className={`absolute top-1 right-0.5 min-w-[1.125rem] h-5 px-1 rounded-md text-[10px] leading-5 text-center font-semibold tabular-nums ${
+                  inboxUnread > 0
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-600'
+                }`}
+                title={`${inboxUnread} unread`}
+              >
+                {inboxUnread > 99 ? '99+' : inboxUnread}
+              </span>
+            )}
           </button>
           
           <button 
@@ -137,56 +184,68 @@ function MailboxSidebar({ isCollapsed, onToggleCollapse, activeView, onViewChang
               </svg>
               {!isCollapsed && 'Sent'}
             </div>
-            {!isCollapsed && <span className="text-xs">1</span>}
+            {/* {!isCollapsed && <span className="text-xs">1</span>} */}
           </button>
           
           <button 
+            type="button"
+            title={isCollapsed ? `Drafts: ${sidebarCounts.drafts_count ?? 0}` : undefined}
             onClick={() => onViewChange('drafts')}
             className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} py-2 px-2 text-sm rounded transition-colors duration-200 w-full ${
               activeView === 'drafts' ? 'bg-gray-200 font-medium' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center min-w-0">
+              <svg className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? '' : 'mr-2'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              {!isCollapsed && 'Drafts'}
+              {!isCollapsed && <span className="truncate">Drafts</span>}
             </div>
-            {!isCollapsed && <span className="text-xs">1</span>}
+            {!isCollapsed && (
+              <CountPill value={sidebarCounts.drafts_count} title="Drafts" />
+            )}
           </button>
           
           <button 
+            type="button"
+            title={isCollapsed ? `Archived: ${sidebarCounts.archived_count ?? 0}` : undefined}
             onClick={() => onViewChange('archived')}
             className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} py-2 px-2 text-sm rounded transition-colors duration-200 w-full ${
               activeView === 'archived' ? 'bg-gray-200 font-medium' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center min-w-0">
+              <svg className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? '' : 'mr-2'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8l6 6 6-6" />
               </svg>
-              {!isCollapsed && 'Archived'}
+              {!isCollapsed && <span className="truncate">Archived</span>}
             </div>
-            {!isCollapsed && <span className="text-xs">0</span>}
+            {!isCollapsed && (
+              <CountPill value={sidebarCounts.archived_count} title="Archived" />
+            )}
           </button>
           
           <button 
+            type="button"
+            title={isCollapsed ? `Starred: ${sidebarCounts.starred_count ?? 0}` : undefined}
             onClick={() => onViewChange('starred')}
             className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} py-2 px-2 text-sm rounded transition-colors duration-200 w-full ${
               activeView === 'starred' ? 'bg-gray-200 font-medium' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center min-w-0">
+              <svg className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? '' : 'mr-2'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
-              {!isCollapsed && 'Starred'}
+              {!isCollapsed && <span className="truncate">Starred</span>}
             </div>
-            {!isCollapsed && <span className="text-xs">2</span>}
+            {!isCollapsed && (
+              <CountPill value={sidebarCounts.starred_count} title="Starred" />
+            )}
           </button>
         </div>
         
-        {!isCollapsed && (
+        {/* {!isCollapsed && (
           <div className="px-4 py-2 mt-4">
             <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Pinned</h3>
             <div className="text-sm text-gray-600 py-1">
@@ -194,7 +253,7 @@ function MailboxSidebar({ isCollapsed, onToggleCollapse, activeView, onViewChang
               <div className="text-xs text-gray-400">Finance Department</div>
             </div>
           </div>
-        )}
+        )} */}
       </nav>
     </div>
   )

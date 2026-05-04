@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
+import { identityStorageBase } from '../../services/api'
 import DashboardLayout from '../../DashboardLayout/DashboardLayout'
 import { FiArrowLeft, FiPaperclip, FiDownload, FiCircle } from 'react-icons/fi'
 
@@ -194,7 +195,7 @@ export default function AdminMailContent() {
 
               {mail.sender?.signature && (
                 <div className="mt-6 flex justify-end">
-                  <img src={`https://identity.smt.tfnsolutions.us/storage/${mail.sender.signature}`} alt="Signature" className="max-w-[200px] h-auto" />
+                  <img src={`${identityStorageBase}/storage/${mail.sender.signature}`} alt="Signature" className="max-w-[200px] h-auto" />
                 </div>
               )}
 

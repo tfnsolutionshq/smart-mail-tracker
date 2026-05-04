@@ -1,0 +1,90 @@
+info:
+  name: Update Workflow
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{MEMO_BASE_URL}}workflows/019a58f9-0ffa-738c-bb27-48b29e9ea546"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Clearance Leave\",\r
+
+      \    \"description\": \"Approval process for research grant proposals\",\r
+
+      \    \"key_features\": [\r
+
+      \        \"Multi-level approval process\",\r
+
+      \        \"Time-bound steps\",\r
+
+      \        \"Email notifications\",\r
+
+      \        \"Document attachment support\",\r
+
+      \        \"Audit trail tracking\",\r
+
+      \        \"Role-based access control\",\r
+
+      \        \"Automatic escalation\",\r
+
+      \        \"Status tracking dashboard\"\r
+
+      \    ],\r
+
+      \    \"category_id\": 1,\r
+
+      \    \"is_active\": true,\r
+
+      \    \"steps\": [\r
+
+      \        {\r
+
+      \            \"name\": \"Research Committee Review\",\r
+
+      \            \"required_role\": \"019abf45-668a-73ec-a37f-0a7a2e640d82\",\r
+
+      \            \"order\": 1,\r
+
+      \            \"time_limit\": 8,\r
+
+      \            \"description\": \"urgent\",\r
+
+      \            \"type\": \"Notification\",\r
+
+      \            \"is_final\": false\r
+
+      \        },\r
+
+      \        {\r
+
+      \            \"name\": \"Vice Chancellor Final Approval\",\r
+
+      \            \"required_role\": \"019abf45-6685-7350-aaa6-3b69e7998664\",\r
+
+      \            \"order\": 2,\r
+
+      \            \"time_limit\": 4,\r
+
+      \            \"description\": \"urgent\",\r
+
+      \            \"type\": \"Approval\",\r
+
+      \            \"is_final\": true\r
+
+      \        }\r
+
+      \    ]\r
+
+      }\r\n"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

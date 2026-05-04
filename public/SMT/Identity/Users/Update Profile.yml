@@ -1,0 +1,56 @@
+info:
+  name: Update Profile
+  type: http
+  seq: 13
+
+http:
+  method: POST
+  url: "{{LOCAL_BASE_URL}}profile"
+  body:
+    type: multipart-form
+    data:
+      - name: first_name
+        type: text
+        value: Admin
+        disabled: true
+      - name: last_name
+        type: text
+        value: Promise
+        disabled: true
+      - name: signature
+        type: file
+        value:
+          - /C:/Users/HomePC/Pictures/icons/11654460.png
+      - name: location
+        type: text
+        value: Awka
+        disabled: true
+      - name: bio
+        type: text
+        value: ""
+        disabled: true
+      - name: timezone
+        type: text
+        value: ""
+        disabled: true
+      - name: language
+        type: text
+        value: ""
+        disabled: true
+      - name: phone
+        type: text
+        value: ""
+        disabled: true
+      - name: avatar
+        type: file
+        value:
+          - /C:/Users/HomePC/Pictures/icons/amazon.png
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

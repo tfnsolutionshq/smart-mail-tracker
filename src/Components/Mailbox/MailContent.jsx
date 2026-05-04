@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { memoAPI } from '../../services/api'
+import { memoAPI, identityStorageBase } from '../../services/api'
 import DashboardLayout from '../../DashboardLayout/DashboardLayout'
 import ReplyModal from './ReplyModal'
 import ForwardModal from './ForwardModal'
@@ -63,9 +63,14 @@ function MailContent() {
     }
 
     try {
-      const resp = await axios.get(`/memo-api/mailbox/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const apiClient = axios.create({
+        baseURL: 'https://memo.smt.tfnsolutions.us/api/v1',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
+      const resp = await apiClient.get(`/mailbox/${id}`)
 
       const ok = resp?.data?.status === true && resp?.data?.data
       if (!ok) {
@@ -101,14 +106,14 @@ function MailContent() {
     
     setSubmitting(true)
     try {
-      await axios.post(`/memo-api/memos/${id}/comments`, {
-        content: comment
-      }, {
+      const apiClient = axios.create({
+        baseURL: 'https://memo.smt.tfnsolutions.us/api/v1',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
+      await apiClient.post(`/memos/${id}/comments`, { content: comment })
       
       showNotification('Comment added successfully', 'success')
       setComment('')
@@ -124,14 +129,16 @@ function MailContent() {
   const handleApproval = async (status) => {
     setSubmitting(true)
     try {
-      await axios.post(`/memo-api/workflow-approvals/${id}/process`, {
+      const apiClient = axios.create({
+        baseURL: 'https://memo.smt.tfnsolutions.us/api/v1',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      await apiClient.post(`/workflow-approvals/${id}/process`, {
         status: status,
         notes: approvalNote
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
       })
       
       showNotification(`Memo ${status} successfully`, 'success')
@@ -240,7 +247,11 @@ function MailContent() {
   useEffect(() => {
     const isNotification = (currentStep?.type || '').toLowerCase() === 'notification'
     if (!notificationPingedRef.current && isNotification && token && mail?.id) {
-      axios.get(`/memo-api/mailbox/${mail.id}`, { headers: { Authorization: `Bearer ${token}` } })
+      const apiClient = axios.create({
+        baseURL: 'https://memo.smt.tfnsolutions.us/api/v1',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      apiClient.get(`/mailbox/${mail.id}`)
         .then(() => { notificationPingedRef.current = true })
         .catch((err) => {
           console.warn('Notification step ping failed:', err?.response?.status || err?.message)
@@ -344,7 +355,11 @@ function MailContent() {
                   onClick={async () => {
                     setSubmitting(true)
                     try {
-                      await axios.post('/memo-api/memos', {
+                      const apiClient = axios.create({
+                        baseURL: 'https://memo.smt.tfnsolutions.us/api/v1',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      })
+                      await apiClient.post('/memos', {
                         subject: mail.subject,
                         body: mail.body,
                         priority: mail.priority,
@@ -357,8 +372,6 @@ function MailContent() {
                           recipient_type: r.recipient_type,
                           recipient_role: r.recipient_role || r.role_id
                         })) || []
-                      }, {
-                        headers: { 'Authorization': `Bearer ${token}` }
                       })
                       showNotification('Memo sent successfully', 'success')
                       navigate('/mailbox/sent')
@@ -673,7 +686,7 @@ function MailContent() {
               {mail.sender?.signature && (
                 <div className="mt-6 flex justify-end">
                   <img 
-                    src={`https://identity.smt.tfnsolutions.us/storage/${mail.sender.signature}`} 
+                    src={`${identityStorageBase}/storage/${mail.sender.signature}`} 
                     alt="Signature" 
                     className="max-w-[200px] h-auto"
                   />
@@ -815,7 +828,7 @@ function MailContent() {
             <div className="">
               <h2 className="text-sm font-semibold text-gray-800 mb-1 flex items-center gap-2">
                 {/* <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-300 text-gray-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z" /></svg>
+                  <svg xmlns="https://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z" /></svg>
                 </span> */}
                 Take Action
               </h2>

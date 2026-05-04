@@ -1,0 +1,17 @@
+info:
+  name: Single Role
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{LOCAL_BASE_URL}}roles/019a2518-fbf0-73f7-a0e3-55f9111af27f"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

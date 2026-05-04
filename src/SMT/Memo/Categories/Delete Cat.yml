@@ -1,0 +1,28 @@
+info:
+  name: Delete Cat
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{MEMO_BASE_URL}}categories/6"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Confidential\",\r
+
+      \    \"description\": \"Memos related to academic activities and announcements\",\r
+
+      \    \"is_active\": true\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

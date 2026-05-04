@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FiClock } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { workflowAPI, roleAPI } from '../../services/api'
+import { departmentAPI, workflowAPI, roleAPI } from '../../services/api'
 
 function WorkflowDetails() {
   const { id } = useParams()
@@ -13,6 +13,7 @@ function WorkflowDetails() {
 
   const [workflow, setWorkflow] = useState(null)
   const [roles, setRoles] = useState([])
+  const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(false)
 
   const getRoleName = (roleId) => {
@@ -21,13 +22,20 @@ function WorkflowDetails() {
     return role ? role.name : 'Unknown Role'
   }
 
-  const fetchData = async () => {
+  const getDepartmentName = (departmentId) => {
+    if (!Array.isArray(departments) || !departmentId) return 'Unknown Department'
+    const dept = departments.find(d => d.id === departmentId)
+    return dept ? dept.name : 'Unknown Department'
+  }
+
+  const fetchData = useCallback(async () => {
     if (!token) return
     setLoading(true)
     try {
-      const [workflowRes, rolesRes] = await Promise.all([
+      const [workflowRes, rolesRes, departmentsRes] = await Promise.all([
         workflowAPI.getWorkflow(id, token),
-        roleAPI.getRoles(token)
+        roleAPI.getRoles(token),
+        departmentAPI.getDepartments(token)
       ])
 
       if (workflowRes.status && workflowRes.data) {
@@ -36,17 +44,20 @@ function WorkflowDetails() {
       if (rolesRes.status && rolesRes.data) {
         setRoles(rolesRes.data.data)
       }
+      if (departmentsRes.status && departmentsRes.data) {
+        setDepartments(departmentsRes.data.data)
+      }
     } catch (error) {
       console.error('Error fetching workflow details:', error)
       showNotification('Failed to load workflow details', 'error')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, showNotification, token])
 
   useEffect(() => {
     fetchData()
-  }, [id, token])
+  }, [fetchData])
 
   if (loading) {
     return (
@@ -145,6 +156,11 @@ function WorkflowDetails() {
                     {step.required_role && (
                       <span className="px-1 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
                         {getRoleName(step.required_role)}
+                      </span>
+                    )}
+                    {step.required_department_id && (
+                      <span className="px-1 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                        {getDepartmentName(step.required_department_id)}
                       </span>
                     )}
                   </div>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { memoAPI } from '../../services/api'
+import { memoAPI, identityBaseUrl, identityStorageBase, parseMailboxEnvelope } from '../../services/api'
 
 function Archived() {
   const navigate = useNavigate()
@@ -16,8 +17,7 @@ function Archived() {
 
   const fetchUsers = async () => {
     try {
-      const base = (import.meta.env.VITE_IDENTITY_BASE_URL || 'http://identity.smt.tfnsolutions.us/api/v1').replace(/\/$/, '')
-      const response = await axios.get(`${base}/users`, {
+      const response = await axios.get(`${identityBaseUrl}/users`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (response.data.status && response.data.data?.data) {
@@ -38,8 +38,9 @@ function Archived() {
     setLoading(true)
     try {
       const response = await memoAPI.getArchived(token)
-      if (response.status && response.data?.data) {
-        setEmails(response.data.data)
+      if (response.status && response.data != null) {
+        const { memos: list } = parseMailboxEnvelope(response.data)
+        setEmails(list)
       }
     } catch (error) {
       console.error('Error fetching archived memos:', error)
@@ -134,7 +135,7 @@ function Archived() {
                 {(() => {
                   const user = email.sender?.id ? usersMap[email.sender.id] : null
                   if (user?.avatar) {
-                    return <img src={`https://identity.smt.tfnsolutions.us/storage/${user.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
+                    return <img src={`${identityStorageBase}/storage/${user.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
                   }
                   return email.sender?.name ? email.sender.name.substring(0, 2).toUpperCase() : 'AR'
                 })()}

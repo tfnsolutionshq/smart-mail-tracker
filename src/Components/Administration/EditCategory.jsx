@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
 import { FiX, FiAlertTriangle } from 'react-icons/fi'
+import { memoBaseUrl } from '../../services/api'
 
 function EditCategory({ category, onClose, onSuccess }) {
   const { token } = useAuth()
@@ -11,7 +12,7 @@ function EditCategory({ category, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: category?.name || '',
-    internal_value: category?.internal_value || '',
+    // internal_value: category?.internal_value || '',
     description: category?.description || '',
     is_active: category?.is_active ?? true
   })
@@ -21,7 +22,7 @@ function EditCategory({ category, onClose, onSuccess }) {
     setLoading(true)
 
     try {
-      const response = await axios.put(`/memo-api/categories/${category.id}`, formData, {
+      const response = await axios.put(`${memoBaseUrl}/categories/${category.id}`, formData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -55,32 +56,30 @@ function EditCategory({ category, onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Category Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Internal Value <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.internal_value}
-                onChange={(e) => setFormData({...formData, internal_value: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Category Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              required
+            />
           </div>
+          {/* <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Internal Value <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.internal_value}
+              onChange={(e) => setFormData({...formData, internal_value: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              required
+            />
+          </div> */}
 
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>

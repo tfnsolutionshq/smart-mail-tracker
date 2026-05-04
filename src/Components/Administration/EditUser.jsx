@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { departmentAPI, roleAPI } from '../../services/api'
+import { departmentAPI, roleAPI, userAPI } from '../../services/api'
 import { FiX } from 'react-icons/fi'
 
 function EditUser({ user, onClose, onUserUpdated }) {
@@ -69,21 +68,16 @@ function EditUser({ user, onClose, onUserUpdated }) {
     setLoading(true)
 
     try {
-      const response = await axios.put(`/api/v1/users/${user.id}`, formData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (response.data.status) {
+      const response = await userAPI.updateUser(user.id, formData, token)
+      if (response?.status) {
         showNotification('User updated successfully', 'success')
         onUserUpdated()
         onClose()
       }
     } catch (error) {
       console.error('Error updating user:', error)
-      showNotification('Failed to update user', 'error')
+      const message = error.response?.data?.message || 'Failed to update user'
+      showNotification(message, 'error')
     } finally {
       setLoading(false)
     }

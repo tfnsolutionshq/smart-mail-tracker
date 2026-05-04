@@ -1,0 +1,17 @@
+info:
+  name: Role & Perm
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{LOCAL_BASE_URL}}roles/permissions/available"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

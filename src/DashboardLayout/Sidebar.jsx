@@ -1,6 +1,6 @@
 "use client"
 
-import { FiGrid, FiMail, FiGitBranch, FiBarChart2, FiSettings, FiEdit3, FiUsers, FiX, FiFileText } from "react-icons/fi"
+import { FiGrid, FiMail, FiGitBranch, FiBarChart2, FiSettings, FiEdit3, FiUsers, FiX, FiFileText, FiSearch, FiBriefcase, FiSliders } from "react-icons/fi"
 import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -11,16 +11,18 @@ export default function Sidebar({ isOpen, onToggle }) {
   const location = useLocation()
   const { role, user } = useAuth()
   
-  // Get active item from current pathname
   const getActiveItem = () => {
     const path = location.pathname
     if (path === '/dashboard') return 'dashboard'
     if (path === '/compose-memo') return 'compose'
     if (path === '/record-memo') return 'recordmemo'
+    if (path === '/track-memo') return 'trackmemo'
+    if (path === '/manage-dept') return 'managedept'
+    if (path === '/view-department') return 'viewdept'
     if (path === '/mailbox') return 'mailbox'
     if (path === '/workflows') return 'workflows'
     if (path === '/reports') return 'reports'
-    if (path.startsWith('/users')) return 'users'
+    // if (path.startsWith('/users')) return 'users'
     if (path === '/administration') return 'administration'
     if (path === '/settings') return 'settings'
     return 'dashboard'
@@ -29,6 +31,7 @@ export default function Sidebar({ isOpen, onToggle }) {
   const activeItem = getActiveItem()
   
   const isAdmin = role === 'admin'
+  const isDepartmentHead = role === 'department head'
   
   const formatRole = (role) => {
     const roleMap = {
@@ -49,6 +52,7 @@ export default function Sidebar({ isOpen, onToggle }) {
     { id: "dashboard", label: "Dashboard", icon: FiGrid, path: "/dashboard" },
     { id: "compose", label: "Compose Memo", icon: FiEdit3, path: "/compose-memo" },
     { id: "recordmemo", label: "Record Memo", icon: FiFileText, path: "/record-memo" },
+    { id: "trackmemo", label: "Memo Tracker", icon: FiSearch, path: "/track-memo" },
     { id: "mailbox", label: "Mailbox", icon: FiMail, count: 12, path: "/mailbox" },
     { id: "workflows", label: "Workflows", icon: FiGitBranch, count: 5, path: "/workflows" },
   ]
@@ -59,9 +63,9 @@ export default function Sidebar({ isOpen, onToggle }) {
 
   const systemMenuItems = [
     { id: "reports", label: "Reports", icon: FiBarChart2, path: "/reports" },
-    { id: "users", label: "Users", icon: FiUsers, path: "/users" },
-    { id: "administration", label: "Administration", icon: FiSettings, path: "/administration" },
-    { id: "settings", label: "Settings", icon: FiSettings, path: "/settings" },
+    // { id: "users", label: "Users", icon: FiUsers, path: "/users" },
+    { id: "administration", label: "Administration", icon: FiSliders, path: "/administration" },
+    // { id: "settings", label: "Settings", icon: FiSettings, path: "/settings" },
   ]
   
   // Filter system menu items based on role
@@ -112,7 +116,7 @@ export default function Sidebar({ isOpen, onToggle }) {
             </div>
              */}
             {/* Completion Rate Section */}
-            <div className="mt-4 bg-blue-50 rounded-lg p-3">
+            {/* <div className="mt-4 bg-blue-50 rounded-lg p-3">
               <p className="text-xs font-semibold text-gray-700 mb-2">Completion Rate</p>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div className="bg-black h-2 rounded-full" style={{ width: "74%" }}></div>
@@ -128,7 +132,7 @@ export default function Sidebar({ isOpen, onToggle }) {
                 </div>
               </div>
               <p className="text-lg font-bold text-gray-900 mt-2">94%</p>
-            </div>
+            </div> */}
           </div>
         )}
 
@@ -151,16 +155,46 @@ export default function Sidebar({ isOpen, onToggle }) {
                 {isOpen && (
                   <div className="flex items-center justify-between w-full">
                     <span>{item.label}</span>
-                    {item.count && (
+                    {/* {item.count && (
                       <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">
                         {item.count}
                       </span>
-                    )}
+                    )} */}
                   </div>
                 )}
               </button>
             )
           })}
+
+          {/* Department Section */}
+          {isOpen && !isAdmin && (
+            <div className="pt-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2">
+                DEPARTMENT
+              </p>
+              {isDepartmentHead ? (
+                <button
+                  onClick={() => navigate('/manage-department')}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                    activeItem === 'managedept' ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <FiBriefcase className="w-5 h-5 flex-shrink-0" />
+                  <span>Manage Dept</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/view-department')}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                    activeItem === 'viewdept' ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <FiBriefcase className="w-5 h-5 flex-shrink-0" />
+                  <span>View Dept</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* System Section - Only show for admin */}
           {isOpen && isAdmin && (
@@ -191,7 +225,7 @@ export default function Sidebar({ isOpen, onToggle }) {
         </nav>
 
         {/* Bottom Section */}
-        {isOpen && (
+        {/* {isOpen && (
           <div className="p-4 border-t border-gray-200 space-y-3">
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between">
@@ -212,7 +246,7 @@ export default function Sidebar({ isOpen, onToggle }) {
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </aside>
 
       {/* Mobile Overlay */}

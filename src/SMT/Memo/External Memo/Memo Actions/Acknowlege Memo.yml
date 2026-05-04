@@ -1,0 +1,23 @@
+info:
+  name: Acknowlege Memo
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{MEMO_BASE_URL}}external-memos/8baf6957-adc1-4cc8-b0ac-fd854061e1db/complete"
+  params:
+    - name: status
+      value: completed
+      type: query
+      description: "'pending', 'completed"
+      disabled: true
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

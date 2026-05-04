@@ -1,0 +1,30 @@
+info:
+  name: Update
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{NOTIFY_BASE_URL}}settings/appearance"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"color_theme\": \"dark\",\r
+
+      \    \"font_size\": \"medium\",\r
+
+      \    \"interface_density\": \"comfortable\",\r
+
+      \    \"collapsed_sidebar\": true\r
+
+      \  }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -2,7 +2,6 @@
 // Reads API key from Vite environment: VITE_OPENAI_API_KEY
 
 export async function generateMemoContent(subject, { context = '' } = {}) {
-
   const body = {
     model: 'gpt-4o-mini',
     messages: [
@@ -19,18 +18,18 @@ export async function generateMemoContent(subject, { context = '' } = {}) {
     temperature: 0.7
   }
 
-  const url = import.meta.env.VITE_AI_PROXY_URL || '/openai/v1/chat/completions'
+  const url = '/openai/v1/chat/completions'
   let resp
   try {
     resp = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(body)
     })
   } catch {
-    throw new Error('Failed to reach AI proxy')
+    throw new Error('Failed to reach OpenAI API')
   }
 
   if (resp.status === 401) {

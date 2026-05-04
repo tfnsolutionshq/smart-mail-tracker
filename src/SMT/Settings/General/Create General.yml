@@ -1,0 +1,88 @@
+info:
+  name: Create General
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{NOTIFY_BASE_URL}}settings"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"notifications\": {\r
+
+      \    \"email_new_memos\": true,\r
+
+      \    \"email_approval_requests\": false,\r
+
+      \    \"email_deadline_reminders\": true,\r
+
+      \    \"email_comments_replies\": true,\r
+
+      \    \"push_new_memos\": true,\r
+
+      \    \"push_approval_requests\": false,\r
+
+      \    \"push_deadline_reminders\": true,\r
+
+      \    \"push_comments_replies\": false,\r
+
+      \    \"enable_desktop_notifications\": true,\r
+
+      \    \"notification_sound\": false,\r
+
+      \    \"quiet_hours\": true\r
+
+      \  },\r
+
+      \  \"security\": {\r
+
+      \    \"two_factor_authentication\": true,\r
+
+      \    \"session_timeout\": 60,\r
+
+      \    \"login_alerts\": true,\r
+
+      \    \"password_expiry\": 90,\r
+
+      \    \"change_password_required\": false,\r
+
+      \    \"download_recovery_codes\": true\r
+
+      \  },\r
+
+      \  \"appearance\": {\r
+
+      \    \"color_theme\": \"dark\",\r
+
+      \    \"font_size\": \"medium\",\r
+
+      \    \"interface_density\": \"comfortable\",\r
+
+      \    \"collapsed_sidebar\": true\r
+
+      \  },\r
+
+      \  \"integrations\": {\r
+
+      \    \"calendar_integration\": true,\r
+
+      \    \"slack_integration\": false,\r
+
+      \    \"microsoft_teams_integration\": true,\r
+
+      \    \"email_system_integration\": true\r
+
+      \  }\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

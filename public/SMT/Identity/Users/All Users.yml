@@ -1,0 +1,21 @@
+info:
+  name: All Users
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{identity_base_url}}users?per_page=12"
+  params:
+    - name: per_page
+      value: "12"
+      type: query
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

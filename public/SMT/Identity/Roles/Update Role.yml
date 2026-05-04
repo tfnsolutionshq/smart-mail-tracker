@@ -1,0 +1,24 @@
+info:
+  name: Update Role
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{LOCAL_BASE_URL}}roles/019abf45-668e-723a-9e72-8febec8d118b?name=Manager&description=manages things"
+  params:
+    - name: name
+      value: Manager
+      type: query
+    - name: description
+      value: manages things
+      type: query
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

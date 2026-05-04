@@ -1,0 +1,22 @@
+info:
+  name: Delete Role
+  type: http
+  seq: 7
+
+http:
+  method: DELETE
+  url: "{{LOCAL_BASE_URL}}roles/019a251f-27ef-71f1-9c99-70ca31760581"
+  params:
+    - name: id
+      value: 019a251f-70e0-72e3-afed-c9f3ed53d2ae
+      type: query
+      disabled: true
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,23 +1,75 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FiArrowLeft, FiChevronRight } from 'react-icons/fi'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { categoryAPI } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 
 export default function RecordExternalMemo() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { token } = useAuth()
+  const [categories, setCategories] = useState([])
+  const [isCustomCategory, setIsCustomCategory] = useState(false)
+  
+  const previousData = location.state || {}
   const [form, setForm] = useState({
-    reference: '',
-    dateReceived: '',
-    subject: '',
-    senderOrg: '',
-    senderContact: '',
-    priority: 'Medium',
-    category: '',
-    description: ''
+    reference: previousData.reference || '',
+    dateReceived: previousData.dateReceived || '',
+    subject: previousData.subject || '',
+    senderOrg: previousData.senderOrg || '',
+    senderContact: previousData.senderContact || '',
+    priority: previousData.priority || 'Medium',
+    category: previousData.category || '',
+    description: previousData.description || ''
   })
+
+  useEffect(() => {
+    if (token) {
+      const fetchCategories = async () => {
+        try {
+          const response = await categoryAPI.getCategories(token)
+          if (response.status && response.data) {
+            setCategories(response.data.data || [])
+          }
+        } catch (error) {
+          console.error('Error fetching categories:', error)
+        }
+      }
+      fetchCategories()
+    }
+  }, [token])
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleCategoryChange = (e) => {
+    const value = e.target.value
+    if (value === 'Other') {
+      setIsCustomCategory(true)
+      setForm((prev) => ({ ...prev, category: '' }))
+    } else {
+      setIsCustomCategory(false)
+      setForm((prev) => ({ ...prev, category: value }))
+    }
+  }
+
+  const isFormValid = 
+    form.reference && 
+    form.dateReceived && 
+    form.subject && 
+    form.senderOrg && 
+    form.senderContact && 
+    form.category && 
+    form.description
+
+  const handleNext = () => {
+    if (!isFormValid) {
+      alert('Please fill in all required fields marked with *');
+      return;
+    }
+    navigate('/record-external-attachments', { state: form });
   }
 
   return (
@@ -72,9 +124,9 @@ export default function RecordExternalMemo() {
             </div>
           </div>
         </div>
-        <div className="mt-3 w-full bg-gray-200 h-1 rounded-full">
+        {/* <div className="mt-3 w-full bg-gray-200 h-1 rounded-full">
           <div className="bg-black h-1 rounded-full" style={{ width: '25%' }}></div>
-        </div>
+        </div> */}
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
@@ -101,30 +153,53 @@ export default function RecordExternalMemo() {
             <input name="senderOrg" value={form.senderOrg} onChange={handleChange} placeholder="e.g., Ministry of Education" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]" />
           </div>
           <div>
-            <label className="text-sm text-gray-700">Sender Contact (Optional)</label>
+            <label className="text-sm text-gray-700">Sender Contact <span className="text-red-500">*</span></label>
             <input name="senderContact" value={form.senderContact} onChange={handleChange} placeholder="Email or phone" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]" />
           </div>
           <div>
-            <label className="text-sm text-gray-700">Priority Level</label>
+            <label className="text-sm text-gray-700">Priority Level <span className="text-red-500">*</span></label>
             <select name="priority" value={form.priority} onChange={handleChange} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]">
-              <option>Low</option>
               <option>Medium</option>
               <option>High</option>
+              <option>Low</option>
             </select>
           </div>
           <div>
-            <label className="text-sm text-gray-700">Category (Optional)</label>
-            <input name="category" value={form.category} onChange={handleChange} placeholder="e.g., Policy, Request, Circular" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]" />
+            <label className="text-sm text-gray-700">Category <span className="text-red-500">*</span></label>
+            <select 
+              value={isCustomCategory ? 'Other' : form.category} 
+              onChange={handleCategoryChange} 
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]"
+            >
+              <option value="">Select Category</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.name}>{cat.name}</option>
+              ))}
+              <option value="Other">Other (Enter custom)</option>
+            </select>
+            {isCustomCategory && (
+              <input 
+                name="category" 
+                value={form.category} 
+                onChange={handleChange} 
+                placeholder="Enter custom category" 
+                className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]" 
+              />
+            )}
           </div>
           <div className="md:col-span-2">
-            <label className="text-sm text-gray-700">Description/Summary (Optional)</label>
+            <label className="text-sm text-gray-700">Description/Summary <span className="text-red-500">*</span></label>
             <textarea name="description" value={form.description} onChange={handleChange} placeholder="Brief description of the memo content" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm h-24 bg-[#F3F3F5]" />
           </div>
         </div>
 
         <div className="flex items-center justify-between mt-6">
           <button onClick={() => navigate(-1)} className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg">Cancel</button>
-          <button className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg flex items-center gap-2" onClick={() => navigate('/record-external-attachments')}>
+          <button 
+            disabled={!isFormValid}
+            className={`px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg flex items-center gap-2 ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`} 
+            onClick={handleNext}
+          >
             Next
             <FiChevronRight className="w-4 h-4" />
           </button>

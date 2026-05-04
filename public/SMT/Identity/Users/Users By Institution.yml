@@ -1,0 +1,21 @@
+info:
+  name: Users By Institution
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{LOCAL_BASE_URL}}users/institute?institute_id=8b9d49ed-cc27-43fe-afa4-ba852ced165d"
+  params:
+    - name: institute_id
+      value: 8b9d49ed-cc27-43fe-afa4-ba852ced165d
+      type: query
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

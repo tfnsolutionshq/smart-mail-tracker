@@ -1,0 +1,34 @@
+info:
+  name: Update User
+  type: http
+  seq: 12
+
+http:
+  method: PUT
+  url: "{{identity_base_url}}users/019b220d-4d9d-73eb-9667-cdf8ac228944"
+  body:
+    type: json
+    data: "{\r
+
+      \    // \"first_name\": \"Johnny\",\r
+
+      \    // \"last_name\": \"Doe\", \r
+
+      \    // \"email\": \"johnbul@example.com\",\r
+
+      \    // \"department_id\": \"019abf45-6675-71a4-a92c-50e51b46e0ff\",\r
+
+      \    // \"role_id\": \"019abf45-668a-73ec-a37f-0a7a2e640d82\"\r
+
+      \    \"is_active\": 0\r
+
+      }\r\n"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

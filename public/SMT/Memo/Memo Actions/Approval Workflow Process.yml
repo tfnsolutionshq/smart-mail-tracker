@@ -1,0 +1,26 @@
+info:
+  name: Approval Workflow Process
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}workflow-approvals/9dff8344-3ca6-4246-9e89-8ba3a3bf3971/process"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"status\": \"approved\",\r
+
+      \    \"notes\": \"The curriculum looks comprehensive and well-structured. Approved for next review stage.\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

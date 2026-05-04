@@ -1,0 +1,33 @@
+info:
+  name: Forward
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}external-memos/e7747321-3e61-47b6-8652-0675eb635d27/forward"
+  params:
+    - name: status
+      value: completed
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: "{\r
+
+      \  \"department_id\": \"019abf45-6675-71a4-a92c-50e51b46e0ff\",\r
+
+      \  \"email\": \"promisedeco24@gmail.com\",\r
+
+      \  \"remarks\": \"Please review this external memo urgently.\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

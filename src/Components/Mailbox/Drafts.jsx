@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { memoAPI } from '../../services/api'
+import { memoAPI, identityBaseUrl, memoBaseUrl, identityStorageBase, parseMailboxEnvelope } from '../../services/api'
 
 function Drafts() {
   const navigate = useNavigate()
@@ -20,8 +20,7 @@ function Drafts() {
 
   const fetchUsers = async () => {
     try {
-      const base = (import.meta.env.VITE_IDENTITY_BASE_URL || 'http://identity.smt.tfnsolutions.us/api/v1').replace(/\/$/, '')
-      const response = await axios.get(`${base}/users`, {
+      const response = await axios.get(`${identityBaseUrl}/users`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (response.data.status && response.data.data?.data) {
@@ -40,11 +39,17 @@ function Drafts() {
     if (!token) return
     setLoading(true)
     try {
-      const response = await axios.get('/memo-api/mailbox/drafts', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const apiClient = axios.create({
+        baseURL: memoBaseUrl,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
+      const response = await apiClient.get('/mailbox/drafts')
       if (response.data.status && response.data.data) {
-        setEmails(response.data.data.data)
+        const { memos: list } = parseMailboxEnvelope(response.data.data)
+        setEmails(list)
       }
     } catch (error) {
       console.error('Error fetching drafts:', error)
@@ -160,7 +165,7 @@ function Drafts() {
                   const toRecipient = email.recipients?.find(r => r.recipient_type === 'to')
                   const user = toRecipient?.recipient_id ? usersMap[toRecipient.recipient_id] : null
                   if (user?.avatar) {
-                    return <img src={`https://identity.smt.tfnsolutions.us/storage/${user.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
+                    return <img src={`${identityStorageBase}/storage/${user.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
                   }
                   const name = toRecipient?.recipient_name || `${toRecipient?.first_name || ''} ${toRecipient?.last_name || ''}`.trim()
                   return name ? name.substring(0, 2).toUpperCase() : 'U'

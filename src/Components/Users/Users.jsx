@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { userAPI } from "../../services/api"
+import { userAPI, identityStorageBase } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
 import { useNotification } from "../../context/NotificationContext"
 import { FiMail } from "react-icons/fi"
@@ -83,7 +83,7 @@ export default function Users() {
                       <div className="flex items-center gap-2">
                         {user.avatar ? (
                           <img
-                            src={`https://identity.smt.tfnsolutions.us/storage/${user.avatar}`}
+                            src={`${identityStorageBase}/storage/${user.avatar}`}
                             alt={user.first_name}
                             className="w-8 h-8 rounded-full object-cover"
                           />

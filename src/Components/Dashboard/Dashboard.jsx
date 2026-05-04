@@ -69,10 +69,11 @@ export default function Dashboard() {
               <FiActivity className="w-4 h-4" />
               Activity Logs
             </Link>
+            <Link to="/compose-memo">
             <button className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
               <FiEdit3 className="w-4 h-4" />
               Compose Memo
-            </button>
+            </button></Link>
           </div>
         </div>
       </div>
@@ -115,12 +116,12 @@ export default function Dashboard() {
         <div className="lg:col-span-1 bg-white rounded-lg border border-gray-200 p-5">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <p className="text-sm text-gray-600 mb-4">Shortcuts</p>
-          <div className="space-y-3">
-            <ActionButton icon={FiEdit3} label="New Memo" />
-            <ActionButton icon={FiMail} label={`Inbox (${dashboardData?.total_inbox || 0})`} />
-            <ActionButton icon={FiEdit3} label={`Drafts (${dashboardData?.total_drafts || 0})`} />
-            <ActionButton icon={FiGitBranch} label="View Workflows" />
-            <ActionButton icon={FiSettings} label="Settings" />
+          <div className="space-y-4">
+            <Link to="/compose-memo" className="block"><ActionButton icon={FiEdit3} label="New Memo" /></Link>
+            <Link to="/mailbox" className="block"><ActionButton icon={FiMail} label={`Inbox (${dashboardData?.total_inbox || 0})`} /></Link>
+            {/* <Link to="/mailbox" className="block"><ActionButton icon={FiEdit3} label={`Drafts (${dashboardData?.total_drafts || 0})`} /></Link> */}
+            <Link to="/workflows" className="block"><ActionButton icon={FiGitBranch} label="View Workflows" /></Link>
+            <Link to="/profile" className="block"><ActionButton icon={FiSettings} label="Settings" /></Link>
           </div>
         </div>
 

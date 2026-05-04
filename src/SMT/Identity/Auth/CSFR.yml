@@ -1,0 +1,40 @@
+info:
+  name: CSFR
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: https://identity.smt.tfnsolutions.us/sanctum/csrf-cookie
+  body:
+    type: json
+    data: "// admin\r
+
+      // {\r
+
+      //     // \"email\": \"elexispd@gmail.com\",\r
+
+      //     \"email\": \"promisedeco24@gmail.com\",\r
+
+      //     \"password\": \"password\"\r
+
+      // }\r
+
+      \r
+
+      // department head\r
+
+      {\r
+
+      \    \"email\": \"elexispd@gmail.com\",\r
+
+      \    \"password\": \"password\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,32 @@
+info:
+  name: Create Cat
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{MEMO_BASE_URL}}categories"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Confidential\",\r
+
+      \    \"internal_value\": \"Internal\",\r
+
+      \    \"color:\": \"Red\",\r
+
+      \    \"description\": \"Memos related to academic activities and announcements\",\r
+
+      \    \"is_active\": true\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
