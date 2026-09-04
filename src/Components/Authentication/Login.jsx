@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -83,7 +83,9 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo and Title */}
         <div className="text-center mb-6">
-          <img src={logo} alt="SmartMailTrack" className="h-14 mx-auto mb-3" />
+          <Link to="/">
+            <img src={logo} alt="SmartMailTrack" className="h-14 mx-auto mb-3" />
+          </Link>
           <p className="text-xs text-gray-300">
             Enterprise Memo Management Platform
           </p>
