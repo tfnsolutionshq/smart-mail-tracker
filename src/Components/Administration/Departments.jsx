@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { FiMoreVertical, FiEdit, FiUserPlus, FiPower, FiTrash2 } from 'react-icons/fi'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { FiMoreVertical, FiEdit, FiUserPlus, FiPower, FiTrash2, FiSearch } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
 import { departmentAPI, userAPI } from '../../services/api'
@@ -15,27 +15,39 @@ function Departments() {
   const [stats, setStats] = useState({ total_departments: 0, active_departments: 0 })
   const [totalUsers, setTotalUsers] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [lastPage, setLastPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const deptMenuRef = useRef(null)
+  const searchTimeoutRef = useRef(null)
   const { token } = useAuth()
   const { showNotification } = useNotification()
 
-  const fetchData = async () => {
+  const fetchData = async (page = 1, search = '') => {
     setLoading(true)
     try {
+      const filters = { page }
+      if (search) filters.search = search
+
       const [deptResponse, statsResponse, usersResponse] = await Promise.all([
-        departmentAPI.getDepartments(token),
+        departmentAPI.getDepartments(token, filters),
         departmentAPI.getDepartmentStats(token),
         userAPI.getUsers({}, token)
       ])
-      
+
       if (deptResponse.status && deptResponse.data) {
         setDepartments(deptResponse.data.data)
+        setCurrentPage(deptResponse.data.current_page)
+        setLastPage(deptResponse.data.last_page)
+        setTotal(deptResponse.data.total)
       }
-      
+
       if (statsResponse.status && statsResponse.data) {
         setStats(statsResponse.data)
       }
-      
+
       if (usersResponse.status && usersResponse.data) {
         setTotalUsers(usersResponse.data.total)
       }
@@ -48,8 +60,80 @@ function Departments() {
   }
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData(1, debouncedSearch)
+  }, [debouncedSearch])
+
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+      setCurrentPage(1)
+    }, 300)
+    return () => clearTimeout(searchTimeoutRef.current)
+  }, [searchQuery])
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > lastPage || page === currentPage) return
+    fetchData(page, debouncedSearch)
+  }
+
+  const renderPageNumbers = () => {
+    const pages = []
+    const maxVisible = 5
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+    let end = Math.min(lastPage, start + maxVisible - 1)
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1)
+    }
+
+    if (start > 1) {
+      pages.push(
+        <button
+          key={1}
+          onClick={() => handlePageChange(1)}
+          className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+          1
+        </button>
+      )
+      if (start > 2) {
+        pages.push(<span key="start-ellipsis" className="px-2 text-xs text-gray-400">...</span>)
+      }
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1 text-xs border rounded-lg ${
+            i === currentPage
+              ? 'bg-black text-white border-black'
+              : 'border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          {i}
+        </button>
+      )
+    }
+
+    if (end < lastPage) {
+      if (end < lastPage - 1) {
+        pages.push(<span key="end-ellipsis" className="px-2 text-xs text-gray-400">...</span>)
+      }
+      pages.push(
+        <button
+          key={lastPage}
+          onClick={() => handlePageChange(lastPage)}
+          className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+          {lastPage}
+        </button>
+      )
+    }
+
+    return pages
+  }
 
   // Close department menu on outside click
   useEffect(() => {
@@ -66,7 +150,7 @@ function Departments() {
     try {
       await departmentAPI.deleteDepartment(departmentToDelete.id, token)
       showNotification('Department deleted successfully', 'success')
-      fetchData()
+      fetchData(currentPage, debouncedSearch)
     } catch (error) {
       console.error('Error deleting department:', error)
       const errorMessage = error.response?.data?.message || 'Failed to delete department'
@@ -122,16 +206,34 @@ function Departments() {
         </div>
       </div>
 
-      {/* Department Management Header */}
-      <div className="mb-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-1">Department Management</h2>
-        <p className="text-xs text-gray-600">Organize users by departments and manage hierarchies</p>
+      {/* Department Management Header + Search */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 mb-1">Department Management</h2>
+          <p className="text-xs text-gray-600">Organize users by departments and manage hierarchies</p>
+        </div>
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search departments..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent w-56"
+          />
+        </div>
       </div>
 
       {/* Departments Grid */}
       {loading ? (
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      ) : departments.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-gray-500">
+            {debouncedSearch ? 'No departments match your search.' : 'No departments found.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -169,14 +271,6 @@ function Departments() {
                         <FiEdit className="w-3 h-3 mr-2" />
                         Edit Department
                       </button>
-                      {/* <button className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50">
-                        <FiUserPlus className="w-3 h-3 mr-2" />
-                        Add User
-                      </button> */}
-                      {/* <button className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50">
-                        <FiPower className="w-3 h-3 mr-2" />
-                        Deactivate
-                      </button> */}
                       <hr className="my-1" />
                       <button 
                         onClick={() => {
@@ -199,12 +293,34 @@ function Departments() {
                   {dept.department_code} • {dept.description}
                 </p>
               </div>
-
-              {/* <div className="text-center py-4">
-                <p className="text-xs text-gray-400">Department details</p>
-              </div> */}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {lastPage > 1 && (
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+          <p className="text-xs text-gray-500">
+            Showing page {currentPage} of {lastPage} ({total} departments)
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            {renderPageNumbers()}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === lastPage}
+              className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
@@ -216,7 +332,7 @@ function Departments() {
             setShowEditDepartment(false)
             setSelectedDepartment(null)
           }}
-          onSuccess={fetchData}
+          onSuccess={() => fetchData(currentPage, debouncedSearch)}
         />
       )}
 

@@ -1,63 +1,76 @@
-"use client"
+"use client";
 
-import { FiMenu, FiSearch, FiBell, FiSettings, FiUser, FiChevronDown, FiSun, FiHelpCircle } from "react-icons/fi"
-import { useState, useEffect } from "react"
-import axios from "axios"
-import { useAuth } from "../context/AuthContext"
-import { useNotification } from "../context/NotificationContext"
-import { useNavigate } from "react-router-dom"
-import { identityBaseUrl, notificationBaseUrl } from "../services/api"
-import Notifications from "../Components/Notifications/Notifications"
+import {
+  FiMenu,
+  FiSearch,
+  FiBell,
+  FiSettings,
+  FiUser,
+  FiChevronDown,
+  FiSun,
+  FiHelpCircle,
+} from "react-icons/fi";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
+import { useNavigate } from "react-router-dom";
+import { identityBaseUrl, notificationBaseUrl } from "../services/api";
+import Notifications from "../Components/Notifications/Notifications";
+import logo from "../assets/SMTLogoBLCK.png";
 
 export default function Header({ onMenuClick }) {
-  const { logout, user, token } = useAuth()
-  const { showNotification } = useNotification()
-  const navigate = useNavigate()
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
+  const { logout, user, token } = useAuth();
+  const { showNotification } = useNotification();
+  const navigate = useNavigate();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const formatRole = (role) => {
-    if (!role) return 'User'
-    return role.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-  }
+    if (!role) return "User";
+    return role
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
   const getInitials = (firstName, lastName) => {
-    const first = firstName?.charAt(0)?.toUpperCase() || ''
-    const last = lastName?.charAt(0)?.toUpperCase() || ''
-    return `${first}${last}`
-  }
+    const first = firstName?.charAt(0)?.toUpperCase() || "";
+    const last = lastName?.charAt(0)?.toUpperCase() || "";
+    return `${first}${last}`;
+  };
 
   useEffect(() => {
     async function fetchUnreadCount() {
-      if (!user?.id || !token) return
+      if (!user?.id || !token) return;
       try {
         const response = await axios.get(
-          `${notificationBaseUrl}/notifications/${user.id}/unread-count`
-        )
+          `${notificationBaseUrl}/notifications/${user.id}/unread-count`,
+        );
         if (response.data.success) {
-          setUnreadCount(response.data.unread_count)
+          setUnreadCount(response.data.unread_count);
         }
       } catch (error) {
-        console.error('Failed to fetch unread count:', error)
+        console.error("Failed to fetch unread count:", error);
       }
     }
-    fetchUnreadCount()
-    const interval = setInterval(fetchUnreadCount, 30000)
-    return () => clearInterval(interval)
-  }, [user?.id, token])
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id, token]);
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${identityBaseUrl}/logout`)
+      await axios.post(`${identityBaseUrl}/logout`);
     } catch (error) {
-      console.log('Logout API error:', error)
+      console.log("Logout API error:", error);
     } finally {
-      logout()
-      showNotification('Logged out successfully', 'success')
-      navigate('/login')
+      logout();
+      showNotification("Logged out successfully", "success");
+      navigate("/login");
     }
-  }
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-3 py-2.5 flex items-center justify-between gap-2 h-18">
@@ -72,56 +85,34 @@ export default function Header({ onMenuClick }) {
         </button>
 
         {/* Search Bar */}
-        <div className="hidden sm:flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-2.5 flex-1 max-w-md">
-          <FiSearch className="w-3 h-3 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search memos, workflows, users..."
-            className="bg-transparent outline-none text-xs w-full placeholder-gray-500"
-          />
-        </div>
-        
+        <img src={logo} alt="SmartMailTrack" className="h-10 flex-shrink-0" />
+
         {/* Mobile Search Button */}
         <button className="sm:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
           <FiSearch className="w-4 h-4 text-gray-600" />
         </button>
       </div>
 
-      {/* Center Section - State University */}
-      {/* <div className="hidden lg:flex items-center justify-center flex-1">
-        <span className="text-sm font-medium text-gray-700">State University</span>
-      </div> */}
-
       {/* Right Section */}
       <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end">
-        {/* Admin Badge */}
-        {/* <span className="hidden md:inline text-xs border border-gray-300 px-2 py-1 rounded-full font-medium text-gray-700">State University</span> */}
-        {/* <span className="hidden sm:inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {formatRole(user?.role)}
-        </span> */}
-
-        {/* Theme Toggle */}
-        {/* <button className="hidden sm:block p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-          <FiSun className="w-4 h-4 text-gray-600" />
-        </button> */}
-
-        {/* Help */}
-        {/* <button className="hidden sm:block p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-          <FiHelpCircle className="w-4 h-4 text-gray-600" />
-        </button> */}
-
         {/* Notifications */}
         <div className="relative">
-          <button 
+          <button
             onClick={() => setShowNotifications(!showNotifications)}
             className={`relative p-1.5 rounded-lg transition-colors ${
-              showNotifications ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+              showNotifications
+                ? "bg-blue-100 text-blue-600"
+                : "hover:bg-gray-100 text-gray-600"
             }`}
           >
-            <FiBell className={`w-4 h-4 ${showNotifications ? "text-blue-600" : "text-gray-600"}`} />
+            <FiBell
+              className={`w-4 h-4 ${showNotifications ? "text-blue-600" : "text-gray-600"}`}
+            />
             {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
-                <span className="text-xs font-bold text-white">{unreadCount}</span>
+                <span className="text-xs font-bold text-white">
+                  {unreadCount}
+                </span>
               </span>
             )}
           </button>
@@ -129,7 +120,10 @@ export default function Header({ onMenuClick }) {
           {/* Notifications Dropdown */}
           {showNotifications && (
             <div className="absolute right-0 mt-2 z-50 animate-in slide-in-from-top-2 fade-in duration-200">
-              <Notifications onClose={() => setShowNotifications(false)} onUpdate={() => setUnreadCount(0)} />
+              <Notifications
+                onClose={() => setShowNotifications(false)}
+                onUpdate={() => setUnreadCount(0)}
+              />
             </div>
           )}
         </div>
@@ -141,11 +135,17 @@ export default function Header({ onMenuClick }) {
             className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-xs font-semibold text-white">{getInitials(user?.first_name, user?.last_name)}</span>
+              <span className="text-xs font-semibold text-white">
+                {getInitials(user?.first_name, user?.last_name)}
+              </span>
             </div>
             <div className="hidden sm:block text-left">
-              <div className="text-sm font-medium text-gray-700">{user?.first_name} {user?.last_name}</div>
-              <div className="text-xs text-gray-500">{formatRole(user?.role)}</div>
+              <div className="text-sm font-medium text-gray-700">
+                {user?.first_name} {user?.last_name}
+              </div>
+              <div className="text-xs text-gray-500">
+                {formatRole(user?.role)}
+              </div>
             </div>
             <FiChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hidden sm:block" />
           </button>
@@ -153,15 +153,18 @@ export default function Header({ onMenuClick }) {
           {/* User Dropdown */}
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-top-2 fade-in duration-200">
-              <button 
-                onClick={() => { setShowUserMenu(false); navigate('/profile') }}
+              <button
+                onClick={() => {
+                  setShowUserMenu(false);
+                  navigate("/profile");
+                }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 Profile
               </button>
               {/* <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Settings</button> */}
               <hr className="my-2" />
-              <button 
+              <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
@@ -172,5 +175,5 @@ export default function Header({ onMenuClick }) {
         </div>
       </div>
     </header>
-  )
+  );
 }

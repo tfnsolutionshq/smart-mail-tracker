@@ -1,88 +1,102 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import axios from "axios"
-import { useAuth } from "../../context/AuthContext"
-import { useNotification } from "../../context/NotificationContext"
-import { identityBaseUrl } from "../../services/api"
-import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from "react-icons/fi"
-import { FcGoogle } from "react-icons/fc"
-import { SiApple } from "react-icons/si"
-import authImage from "../../assets/Authentication/Auth.jpg"
-import logo from "../../assets/SMTLogowhite.png"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
+import { identityBaseUrl } from "../../services/api";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
+import { SiApple } from "react-icons/si";
+import authImage from "../../assets/Authentication/Auth.jpg";
+import logo from "../../assets/SMTLogowhite.png";
 
 export default function LoginPage() {
-  const navigate = useNavigate()
-  const { login } = useAuth()
-  const { showNotification } = useNotification()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showNotification } = useNotification();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSignIn = async (e) => {
-    e.preventDefault()
-    
-    if (!email || !password) {
-      setError(true)
-      return
-    }
-    
-    setError(false)
-    setLoading(true)
-    
-    try {
-      console.log('Login - Making API call to:', `${identityBaseUrl}/login`)
-      const response = await axios.post(`${identityBaseUrl}/login`, {
-        email,
-        password
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      })
+    e.preventDefault();
 
-      console.log('Login - API response:', response.data)
+    if (!email || !password) {
+      setError(true);
+      return;
+    }
+
+    setError(false);
+    setLoading(true);
+
+    try {
+      console.log("Login - Making API call to:", `${identityBaseUrl}/login`);
+      const response = await axios.post(
+        `${identityBaseUrl}/login`,
+        {
+          email,
+          password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        },
+      );
+
+      console.log("Login - API response:", response);
 
       if (response.data.status) {
-        console.log('Login - Calling login function with token:', response.data.data.token)
-        login(response.data.data.token, response.data.data.user)
-        showNotification(response.data.message, 'success')
-        navigate('/dashboard')
+        console.log(
+          "Login - Calling login function with token:",
+          response.data.data.token,
+        );
+        login(response.data.data.token, response.data.data.user);
+        showNotification(response.data.message, "success");
+        navigate("/dashboard");
       }
     } catch (error) {
-      console.error('Login - API error:', error)
-      const message = error.response?.data?.message || 'Login failed. Please try again.'
-      showNotification(message, 'error')
+      console.error("Login - API error:", error);
+      const message =
+        error.response?.data?.message || "Login failed. Please try again.";
+      showNotification(message, "error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{
         backgroundImage: `linear-gradient(rgba(1, 24, 35, 0.98), rgba(1, 24, 35, 0.95)), url(${authImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
       }}
     >
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo and Title */}
         <div className="text-center mb-6">
           <img src={logo} alt="SmartMailTrack" className="h-14 mx-auto mb-3" />
-          <p className="text-xs text-gray-300">Enterprise Memo Management Platform</p>
+          <p className="text-xs text-gray-300">
+            Enterprise Memo Management Platform
+          </p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-1 text-center">Welcome Back</h2>
-          <p className="text-center text-gray-600 text-xs mb-4">Sign in to access your workspace</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-1 text-center">
+            Welcome Back
+          </h2>
+          <p className="text-center text-gray-600 text-xs mb-4">
+            Sign in to access your workspace
+          </p>
 
           {/* Error Alert */}
           {error && (
@@ -98,15 +112,17 @@ export default function LoginPage() {
           <form onSubmit={handleSignIn} className="space-y-3">
             {/* Email Field */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Email
+              </label>
               <div className="relative">
                 <FiMail className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (error) setError(false)
+                    setEmail(e.target.value);
+                    if (error) setError(false);
                   }}
                   placeholder="smith.johnson@innovate.edu"
                   className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
@@ -117,10 +133,12 @@ export default function LoginPage() {
             {/* Password Field */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-medium text-gray-700">Password</label>
-                <button 
+                <label className="block text-xs font-medium text-gray-700">
+                  Password
+                </label>
+                <button
                   type="button"
-                  onClick={() => navigate('/forgot-password')}
+                  onClick={() => navigate("/forgot-password")}
                   className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Forgot password?
@@ -132,8 +150,8 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
-                    setPassword(e.target.value)
-                    if (error) setError(false)
+                    setPassword(e.target.value);
+                    if (error) setError(false);
                   }}
                   placeholder="demo123"
                   className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
@@ -143,7 +161,11 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <FiEyeOff className="w-4 h-4" />
+                  ) : (
+                    <FiEye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -154,7 +176,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-2 rounded-lg transition-colors duration-200 mt-4 text-sm"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
 
@@ -184,5 +206,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

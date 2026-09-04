@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { FiSearch, FiUpload, FiPlus, FiMoreVertical, FiEdit, FiEye, FiKey, FiPower, FiTrash2 } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
@@ -21,6 +22,7 @@ function Administrations() {
   const [activeTab, setActiveTab] = useState('Users')
 
   const [showUserMenu, setShowUserMenu] = useState(null)
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
   const [showAddUser, setShowAddUser] = useState(false)
   const [showEditUser, setShowEditUser] = useState(false)
   const [showViewActivity, setShowViewActivity] = useState(false)
@@ -442,69 +444,27 @@ function Administrations() {
                         )}
                       </td>
                       <td className="py-4">
-                        <div
-                          ref={showUserMenu === user.id ? userMenuRef : undefined}
-                          className="relative"
-                        >
+                        <div className="relative">
                           <button
-                            onClick={() => setShowUserMenu(showUserMenu === user.id ? null : user.id)}
+                            onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              const menuWidth = 192
+                              const menuHeight = 180
+                              const gap = 4
+                              let top = rect.bottom + gap
+                              let left = rect.right - menuWidth
+                              if (top + menuHeight > window.innerHeight) {
+                                top = rect.top - menuHeight - gap
+                              }
+                              if (left < 0) left = 8
+                              if (left + menuWidth > window.innerWidth) left = window.innerWidth - menuWidth - 8
+                              setMenuPosition({ top, left })
+                              setShowUserMenu(showUserMenu === user.id ? null : user.id)
+                            }}
                             className="p-1 hover:bg-gray-100 rounded"
                           >
                             <FiMoreVertical className="w-4 h-4 text-gray-400" />
                           </button>
-                          {showUserMenu === user.id && (
-                            <div className="absolute right-0 top-8 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-                              <button 
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setShowEditUser(true)
-                                  setShowUserMenu(null)
-                                }}
-                                className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50"
-                              >
-                                <FiEdit className="w-3 h-3 mr-2" />
-                                Edit User
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setShowViewActivity(true)
-                                  setShowUserMenu(null)
-                                }}
-                                className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50"
-                              >
-                                <FiEye className="w-3 h-3 mr-2" />
-                                View Activity
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setShowResetPassword(true)
-                                  setShowUserMenu(null)
-                                }}
-                                className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50"
-                              >
-                                <FiKey className="w-3 h-3 mr-2" />
-                                Reset Password
-                              </button>
-                              {/* <button className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50">
-                                <FiPower className="w-3 h-3 mr-2" />
-                                Deactivate
-                              </button> */}
-                              <hr className="my-1" />
-                              <button 
-                                onClick={() => {
-                                  setSelectedUser(user)
-                                  setShowDeleteConfirm(true)
-                                  setShowUserMenu(null)
-                                }}
-                                className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-600"
-                              >
-                                <FiTrash2 className="w-3 h-3 mr-2" />
-                                Deactivate User
-                              </button>
-                            </div>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -579,6 +539,74 @@ function Administrations() {
           </div>
         )}
       </div>
+
+      {/* User Actions Dropdown (portal) */}
+      {showUserMenu && createPortal(
+        <div
+          ref={userMenuRef}
+          className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] py-1"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+        >
+          <button
+            onClick={() => {
+              const user = users.find(u => u.id === showUserMenu)
+              if (user) {
+                setSelectedUser(user)
+                setShowEditUser(true)
+              }
+              setShowUserMenu(null)
+            }}
+            className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50"
+          >
+            <FiEdit className="w-3 h-3 mr-2" />
+            Edit User
+          </button>
+          <button
+            onClick={() => {
+              const user = users.find(u => u.id === showUserMenu)
+              if (user) {
+                setSelectedUser(user)
+                setShowViewActivity(true)
+              }
+              setShowUserMenu(null)
+            }}
+            className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50"
+          >
+            <FiEye className="w-3 h-3 mr-2" />
+            View Activity
+          </button>
+          <button
+            onClick={() => {
+              const user = users.find(u => u.id === showUserMenu)
+              if (user) {
+                setSelectedUser(user)
+                setShowResetPassword(true)
+              }
+              setShowUserMenu(null)
+            }}
+            className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50"
+          >
+            <FiKey className="w-3 h-3 mr-2" />
+            Reset Password
+          </button>
+          <hr className="my-1" />
+          <button
+            onClick={() => {
+              const user = users.find(u => u.id === showUserMenu)
+              if (user) {
+                setSelectedUser(user)
+                setShowDeleteConfirm(true)
+              }
+              setShowUserMenu(null)
+            }}
+            className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-600"
+          >
+            <FiTrash2 className="w-3 h-3 mr-2" />
+            Deactivate User
+          </button>
+        </div>,
+        document.body
+      )}
 
       {/* Popups */}
       {showAddUser && <AddUser onClose={() => setShowAddUser(false)} onSuccess={() => refreshUsers()} />}
