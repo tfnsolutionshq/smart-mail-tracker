@@ -16,6 +16,8 @@ function AddStep({ isOpen, onClose, onAddStep }) {
   const [rolesLoading, setRolesLoading] = useState(false);
   const [rolesError, setRolesError] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+  const [departmentsError, setDepartmentsError] = useState(false);
 
   const toggleRole = (roleId) => {
     setAssignedRoles((prev) =>
@@ -52,25 +54,39 @@ function AddStep({ isOpen, onClose, onAddStep }) {
   const fetchRolesAndDepartments = useCallback(async () => {
     setRolesLoading(true);
     setRolesError(false);
-    try {
-      const [rolesResponse, departmentsResponse] = await Promise.all([
-        roleAPI.getRoles(token),
-        departmentAPI.getDepartments(token),
-      ]);
+    setDepartmentsLoading(true);
+    setDepartmentsError(false);
 
-      if (rolesResponse.status && rolesResponse.data) {
-        setRoles(rolesResponse.data.data);
+    const fetchRoles = async () => {
+      try {
+        const rolesResponse = await roleAPI.getRoles(token);
+        if (rolesResponse.status && rolesResponse.data) {
+          setRoles(rolesResponse.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+        setRolesError(true);
+      } finally {
+        setRolesLoading(false);
       }
+    };
 
-      if (departmentsResponse.status && departmentsResponse.data) {
-        setDepartments(departmentsResponse.data.data);
+    const fetchDepartments = async () => {
+      try {
+        const departmentsResponse = await departmentAPI.getDepartments(token);
+        if (departmentsResponse.status && departmentsResponse.data) {
+          setDepartments(departmentsResponse.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+        setDepartmentsError(true);
+      } finally {
+        setDepartmentsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching roles and departments:", error);
-      setRolesError(true);
-    } finally {
-      setRolesLoading(false);
-    }
+    };
+
+    fetchRoles();
+    fetchDepartments();
   }, [token]);
 
   useEffect(() => {
@@ -291,18 +307,38 @@ function AddStep({ isOpen, onClose, onAddStep }) {
                   <label className="block text-sm font-medium text-gray-900 mb-1">
                     Required Department (optional)
                   </label>
-                  <select
-                    value={requiredDepartmentId}
-                    onChange={(e) => setRequiredDepartmentId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
-                  >
-                    <option value="">No department restriction</option>
-                    {departments.map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </option>
-                    ))}
-                  </select>
+                  {departmentsLoading ? (
+                    <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-400">
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></span>
+                      Loading departments...
+                    </div>
+                  ) : departmentsError ? (
+                    <div className="flex flex-col gap-2">
+                      <span className="px-3 py-2 border border-red-300 rounded-md text-sm text-red-600">
+                        Failed to load departments
+                      </span>
+                      <button
+                        type="button"
+                        onClick={fetchRolesAndDepartments}
+                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      value={requiredDepartmentId}
+                      onChange={(e) => setRequiredDepartmentId(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                    >
+                      <option value="">No department restriction</option>
+                      {departments.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
