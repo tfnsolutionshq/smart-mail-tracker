@@ -1,94 +1,110 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { FiX, FiCheck, FiEye, FiBell } from 'react-icons/fi'
-import { useAuth } from '../../context/AuthContext'
-import { departmentAPI, roleAPI } from '../../services/api'
+import { useState, useEffect, useCallback } from "react";
+import { FiX, FiCheck, FiEye, FiBell, FiChevronDown } from "react-icons/fi";
+import { useAuth } from "../../context/AuthContext";
+import { departmentAPI, roleAPI } from "../../services/api";
 
 function AddStep({ isOpen, onClose, onAddStep }) {
-  const { token } = useAuth()
-  const [selectedType, setSelectedType] = useState('')
-  const [stepName, setStepName] = useState('')
-  const [description, setDescription] = useState('')
-  const [assignedRole, setAssignedRole] = useState('')
-  const [requiredDepartmentId, setRequiredDepartmentId] = useState('')
-  const [timeLimit, setTimeLimit] = useState('')
-  const [roles, setRoles] = useState([])
-  const [departments, setDepartments] = useState([])
- 
+  const { token } = useAuth();
+  const [selectedType, setSelectedType] = useState("");
+  const [stepName, setStepName] = useState("");
+  const [description, setDescription] = useState("");
+  const [assignedRoles, setAssignedRoles] = useState([]);
+  const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
+  const [requiredDepartmentId, setRequiredDepartmentId] = useState("");
+  const [timeLimit, setTimeLimit] = useState("");
+  const [roles, setRoles] = useState([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+  const [rolesError, setRolesError] = useState(false);
+  const [departments, setDepartments] = useState([]);
+
+  const toggleRole = (roleId) => {
+    setAssignedRoles((prev) =>
+      prev.includes(roleId)
+        ? prev.filter((id) => id !== roleId)
+        : [...prev, roleId],
+    );
+  };
+
   const stepTypes = [
     {
-      id: 'approval',
-      name: 'Approval',
-      description: 'Requires approval from assigned role',
+      id: "approval",
+      name: "Approval",
+      description: "Requires approval from assigned role",
       icon: FiCheck,
-      color: 'bg-green-100 text-green-600'
+      color: "bg-green-100 text-green-600",
     },
     {
-      id: 'review',
-      name: 'Review',
-      description: 'Review and comment, no approval required',
+      id: "review",
+      name: "Review",
+      description: "Review and comment, no approval required",
       icon: FiEye,
-      color: 'bg-blue-100 text-blue-600'
+      color: "bg-blue-100 text-blue-600",
     },
     {
-      id: 'notification',
-      name: 'Notification',
-      description: 'Send notification to specified roles',
+      id: "notification",
+      name: "Notification",
+      description: "Send notification to specified roles",
       icon: FiBell,
-      color: 'bg-yellow-100 text-yellow-600'
-    }
-  ]
+      color: "bg-yellow-100 text-yellow-600",
+    },
+  ];
 
   const fetchRolesAndDepartments = useCallback(async () => {
+    setRolesLoading(true);
+    setRolesError(false);
     try {
       const [rolesResponse, departmentsResponse] = await Promise.all([
         roleAPI.getRoles(token),
-        departmentAPI.getDepartments(token)
-      ])
+        departmentAPI.getDepartments(token),
+      ]);
 
       if (rolesResponse.status && rolesResponse.data) {
-        setRoles(rolesResponse.data.data)
+        setRoles(rolesResponse.data.data);
       }
 
       if (departmentsResponse.status && departmentsResponse.data) {
-        setDepartments(departmentsResponse.data.data)
+        setDepartments(departmentsResponse.data.data);
       }
     } catch (error) {
-      console.error('Error fetching roles and departments:', error)
+      console.error("Error fetching roles and departments:", error);
+      setRolesError(true);
+    } finally {
+      setRolesLoading(false);
     }
-  }, [token])
+  }, [token]);
 
   useEffect(() => {
     if (isOpen) {
-      fetchRolesAndDepartments()
+      fetchRolesAndDepartments();
     }
-  }, [isOpen, fetchRolesAndDepartments])
+  }, [isOpen, fetchRolesAndDepartments]);
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (selectedType && stepName) {
-      const stepType = stepTypes.find(type => type.id === selectedType)
+      const stepType = stepTypes.find((type) => type.id === selectedType);
       onAddStep({
         id: Date.now(),
         type: selectedType,
         name: stepName,
         description,
-        assignedRole,
+        assignedRole: assignedRoles,
         requiredDepartmentId,
         timeLimit,
         icon: stepType.icon,
-        color: stepType.color
-      })
-      setSelectedType('')
-      setStepName('')
-      setDescription('')
-      setAssignedRole('')
-      setRequiredDepartmentId('')
-      setTimeLimit('')
-      onClose()
+        color: stepType.color,
+      });
+      setSelectedType("");
+      setStepName("");
+      setDescription("");
+      setAssignedRoles([]);
+      setRequiredDepartmentId("");
+      setTimeLimit("");
+      onClose();
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -104,10 +120,12 @@ function AddStep({ isOpen, onClose, onAddStep }) {
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Step Type Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">Step Type</label>
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              Step Type
+            </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {stepTypes.map((type) => {
-                const Icon = type.icon
+                const Icon = type.icon;
                 return (
                   <button
                     key={type.id}
@@ -115,19 +133,23 @@ function AddStep({ isOpen, onClose, onAddStep }) {
                     onClick={() => setSelectedType(type.id)}
                     className={`flex items-start gap-2 p-3 border rounded-lg text-left transition-colors ${
                       selectedType === type.id
-                        ? 'border-gray-900 bg-gray-50'
-                        : 'border-gray-200 hover:bg-gray-50'
+                        ? "border-gray-900 bg-gray-50"
+                        : "border-gray-200 hover:bg-gray-50"
                     }`}
                   >
                     <div className={`p-1 rounded ${type.color}`}>
                       <Icon className="w-3 h-3" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-gray-900">{type.name}</h4>
-                      <p className="text-xs text-gray-600 mt-1">{type.description}</p>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        {type.name}
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {type.description}
+                      </p>
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </div>
@@ -136,7 +158,9 @@ function AddStep({ isOpen, onClose, onAddStep }) {
           {selectedType && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">Step Name</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Step Name
+                </label>
                 <input
                   type="text"
                   value={stepName}
@@ -148,7 +172,9 @@ function AddStep({ isOpen, onClose, onAddStep }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -159,22 +185,112 @@ function AddStep({ isOpen, onClose, onAddStep }) {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Assigned Role</label>
-                  <select
-                    value={assignedRole}
-                    onChange={(e) => setAssignedRole(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    Assigned Roles
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}
+                    disabled={rolesLoading}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm text-left flex items-center justify-between disabled:bg-gray-50"
                   >
-                    <option value="">Select role</option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>{role.name}</option>
-                    ))}
-                  </select>
+                    {rolesLoading ? (
+                      <span className="flex items-center gap-2 text-gray-400">
+                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></span>
+                        Loading roles...
+                      </span>
+                    ) : rolesError ? (
+                      <span className="text-red-600">Failed to load roles</span>
+                    ) : (
+                      <span className={assignedRoles.length ? "text-gray-900" : "text-gray-400"}>
+                        {assignedRoles.length > 0
+                          ? `${assignedRoles.length} selected`
+                          : "Select one or more roles"}
+                      </span>
+                    )}
+                    <FiChevronDown className="w-4 h-4 text-gray-400" />
+                  </button>
+
+                  {assignedRoles.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {assignedRoles.map((id) => {
+                        const role = roles.find((r) => r.id === id);
+                        return role ? (
+                          <span
+                            key={id}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded"
+                          >
+                            {role.name}
+                            <button
+                              type="button"
+                              onClick={() => toggleRole(id)}
+                              className="text-gray-500 hover:text-gray-800"
+                            >
+                              <FiX className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+
+                  {rolesDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setRolesDropdownOpen(false)}
+                      ></div>
+                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto py-1">
+                        {rolesLoading ? (
+                          <div className="flex items-center justify-center py-6 space-y-2 flex-col">
+                            <span className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></span>
+                            <p className="text-sm text-gray-600">Loading roles...</p>
+                          </div>
+                        ) : rolesError ? (
+                          <div className="flex flex-col items-center justify-center py-6 space-y-3">
+                            <p className="text-sm text-red-600">
+                              Failed to load roles
+                            </p>
+                            <button
+                              type="button"
+                              onClick={fetchRolesAndDepartments}
+                              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        ) : roles.length === 0 ? (
+                          <p className="px-3 py-2 text-sm text-gray-500">
+                            No roles available
+                          </p>
+                        ) : (
+                          roles.map((role) => (
+                            <label
+                              key={role.id}
+                              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={assignedRoles.includes(role.id)}
+                                onChange={() => toggleRole(role.id)}
+                                className="accent-gray-900"
+                              />
+                              <span className="text-sm text-gray-900">
+                                {role.name}
+                              </span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Required Department (optional)</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    Required Department (optional)
+                  </label>
                   <select
                     value={requiredDepartmentId}
                     onChange={(e) => setRequiredDepartmentId(e.target.value)}
@@ -182,13 +298,17 @@ function AddStep({ isOpen, onClose, onAddStep }) {
                   >
                     <option value="">No department restriction</option>
                     {departments.map((dept) => (
-                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Time Limit (hours)</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    Time Limit (hours)
+                  </label>
                   <input
                     type="number"
                     value={timeLimit}
@@ -221,7 +341,7 @@ function AddStep({ isOpen, onClose, onAddStep }) {
         </form>
       </div>
     </div>
-  )
+  );
 }
 
-export default AddStep
+export default AddStep;

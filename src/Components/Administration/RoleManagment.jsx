@@ -1,108 +1,116 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { FiEdit, FiPlus, FiTrash2, FiMoreVertical } from 'react-icons/fi'
-import axios from 'axios'
-import { useAuth } from '../../context/AuthContext'
-import { useNotification } from '../../context/NotificationContext'
-import { roleAPI, identityBaseUrl } from '../../services/api'
-import EditRole from './EditRole'
+import React, { useState, useEffect, useRef } from "react";
+import { FiEdit, FiPlus, FiTrash2, FiMoreVertical } from "react-icons/fi";
+import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
+import { roleAPI, identityBaseUrl } from "../../services/api";
+import EditRole from "./EditRole";
 
 function RoleManagment() {
-  const [selectedPermission, setSelectedPermission] = useState('')
-  const [showEditRole, setShowEditRole] = useState(false)
-  const [selectedRole, setSelectedRole] = useState(null)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [roleToDelete, setRoleToDelete] = useState(null)
-  const [showRoleMenu, setShowRoleMenu] = useState(null)
-  const [showDeletePermissionConfirm, setShowDeletePermissionConfirm] = useState(false)
-  const [permissionToDelete, setPermissionToDelete] = useState(null)
-  const [showPermissionMenu, setShowPermissionMenu] = useState(null)
-  const [roles, setRoles] = useState([])
-  const [permissions, setPermissions] = useState([])
-  const [loading, setLoading] = useState(false)
-  const roleMenuRef = useRef(null)
-  const permissionMenuRef = useRef(null)
-  const { token } = useAuth()
-  const { showNotification } = useNotification()
+  const [selectedPermission, setSelectedPermission] = useState("");
+  const [showEditRole, setShowEditRole] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState(null);
+  const [showRoleMenu, setShowRoleMenu] = useState(null);
+  const [showDeletePermissionConfirm, setShowDeletePermissionConfirm] =
+    useState(false);
+  const [permissionToDelete, setPermissionToDelete] = useState(null);
+  const [showPermissionMenu, setShowPermissionMenu] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [deletingRole, setDeletingRole] = useState(false);
+  const roleMenuRef = useRef(null);
+  const permissionMenuRef = useRef(null);
+  const { token } = useAuth();
+  const { showNotification } = useNotification();
 
   const fetchData = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const [rolesResponse, permissionsResponse] = await Promise.all([
         roleAPI.getRoles(token),
-        roleAPI.getAvailablePermissions(token)
-      ])
-      
+        roleAPI.getAvailablePermissions(token),
+      ]);
+
       if (rolesResponse.status && rolesResponse.data) {
-        setRoles(rolesResponse.data.data)
+        setRoles(rolesResponse.data.data);
       }
-      
+
       if (permissionsResponse.success && permissionsResponse.permissions) {
-        setPermissions(permissionsResponse.permissions)
+        setPermissions(permissionsResponse.permissions);
       }
     } catch (error) {
-      console.error('Error fetching roles/permissions:', error)
-      showNotification('Failed to fetch roles and permissions', 'error')
+      console.error("Error fetching roles/permissions:", error);
+      showNotification("Failed to fetch roles and permissions", "error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   // Close menus when clicking outside
   useEffect(() => {
-    if (!showRoleMenu && !showPermissionMenu) return
+    if (!showRoleMenu && !showPermissionMenu) return;
     const handleMouseDown = (e) => {
       if (
         (roleMenuRef.current && roleMenuRef.current.contains(e.target)) ||
-        (permissionMenuRef.current && permissionMenuRef.current.contains(e.target))
+        (permissionMenuRef.current &&
+          permissionMenuRef.current.contains(e.target))
       ) {
-        return
+        return;
       }
-      setShowRoleMenu(null)
-      setShowPermissionMenu(null)
-    }
-    document.addEventListener('mousedown', handleMouseDown)
-    return () => document.removeEventListener('mousedown', handleMouseDown)
-  }, [showRoleMenu, showPermissionMenu])
+      setShowRoleMenu(null);
+      setShowPermissionMenu(null);
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showRoleMenu, showPermissionMenu]);
 
   const handleDeleteRole = async () => {
+    setDeletingRole(true);
     try {
       await axios.delete(`${identityBaseUrl}/roles/${roleToDelete.id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      showNotification('Role deleted successfully', 'success')
-      fetchData() // Refresh the roles list
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      showNotification("Role deleted successfully", "success");
+      fetchData(); // Refresh the roles list
     } catch (error) {
-      console.error('Error deleting role:', error)
-      showNotification('Failed to delete role', 'error')
+      console.error("Error deleting role:", error);
+      showNotification("Failed to delete role", "error");
     } finally {
-      setShowDeleteConfirm(false)
-      setRoleToDelete(null)
+      setDeletingRole(false);
+      setShowDeleteConfirm(false);
+      setRoleToDelete(null);
     }
-  }
+  };
 
   const handleDeletePermission = async () => {
     try {
-      await axios.delete(`${identityBaseUrl}/permissions/${permissionToDelete.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      showNotification('Permission deleted successfully', 'success')
-      fetchData() // Refresh the permissions list
+      await axios.delete(
+        `${identityBaseUrl}/permissions/${permissionToDelete.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      showNotification("Permission deleted successfully", "success");
+      fetchData(); // Refresh the permissions list
     } catch (error) {
-      console.error('Error deleting permission:', error)
-      showNotification('Failed to delete permission', 'error')
+      console.error("Error deleting permission:", error);
+      showNotification("Failed to delete permission", "error");
     } finally {
-      setShowDeletePermissionConfirm(false)
-      setPermissionToDelete(null)
+      setShowDeletePermissionConfirm(false);
+      setPermissionToDelete(null);
     }
-  }
+  };
 
   return (
     <div className="p-4 sm:p-6">
@@ -110,8 +118,12 @@ function RoleManagment() {
         {/* Role Management */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Role Management</h2>
-            <p className="text-xs text-gray-600">Configure user roles and their permissions</p>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">
+              Role Management
+            </h2>
+            <p className="text-xs text-gray-600">
+              Configure user roles and their permissions
+            </p>
           </div>
 
           {loading ? (
@@ -121,40 +133,51 @@ function RoleManagment() {
           ) : (
             <div className="space-y-3">
               {roles.map((role) => (
-                <div key={role.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                <div
+                  key={role.id}
+                  className="bg-white border border-gray-200 rounded-lg p-4"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900">{role.name}</h3>
-                      <p className="text-xs text-gray-500">{role.permissions?.length || 0} permissions assigned</p>
+                      <h3 className="text-sm font-medium text-gray-900">
+                        {role.name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {role.permissions?.length || 0} permissions assigned
+                      </p>
                     </div>
                     <div
                       className="relative"
                       ref={showRoleMenu === role.id ? roleMenuRef : null}
                     >
                       <button
-                        onClick={() => setShowRoleMenu(showRoleMenu === role.id ? null : role.id)}
+                        onClick={() =>
+                          setShowRoleMenu(
+                            showRoleMenu === role.id ? null : role.id,
+                          )
+                        }
                         className="p-1 hover:bg-gray-100 rounded"
                       >
                         <FiMoreVertical className="w-4 h-4 text-gray-400" />
                       </button>
                       {showRoleMenu === role.id && (
                         <div className="absolute right-0 top-8 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-                          <button 
+                          <button
                             onClick={() => {
-                              setSelectedRole(role)
-                              setShowEditRole(true)
-                              setShowRoleMenu(null)
+                              setSelectedRole(role);
+                              setShowEditRole(true);
+                              setShowRoleMenu(null);
                             }}
                             className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50"
                           >
                             <FiEdit className="w-3 h-3 mr-2" />
                             Edit Role
                           </button>
-                          <button 
+                          <button
                             onClick={() => {
-                              setRoleToDelete(role)
-                              setShowDeleteConfirm(true)
-                              setShowRoleMenu(null)
+                              setRoleToDelete(role);
+                              setShowDeleteConfirm(true);
+                              setShowRoleMenu(null);
                             }}
                             className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-600"
                           >
@@ -184,8 +207,12 @@ function RoleManagment() {
         {/* Available Permissions */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Available Permissions</h2>
-            <p className="text-xs text-gray-600">Complete list of system permissions</p>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">
+              Available Permissions
+            </h2>
+            <p className="text-xs text-gray-600">
+              Complete list of system permissions
+            </p>
           </div>
 
           {loading ? (
@@ -195,49 +222,23 @@ function RoleManagment() {
           ) : (
             <div className="space-y-3">
               {permissions.map((permission) => (
-                <div 
-                  key={permission.id} 
+                <div
+                  key={permission.id}
                   className={`bg-white border rounded-lg p-4 transition-colors ${
-                    selectedPermission === permission.id 
-                      ? 'border-blue-200 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
+                    selectedPermission === permission.id
+                      ? "border-blue-200 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 
+                    <h3
                       className="text-sm font-medium text-gray-900 cursor-pointer flex-1"
                       onClick={() => setSelectedPermission(permission.id)}
                     >
                       {permission.name}
                     </h3>
-                    <div
-                      className="relative"
-                      ref={showPermissionMenu === permission.id ? permissionMenuRef : null}
-                    >
-                      <button
-                        onClick={() => setShowPermissionMenu(showPermissionMenu === permission.id ? null : permission.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                      >
-                        <FiMoreVertical className="w-4 h-4 text-gray-400" />
-                      </button>
-                      {showPermissionMenu === permission.id && (
-                        <div className="absolute right-0 top-8 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-                          <button 
-                            onClick={() => {
-                              setPermissionToDelete(permission)
-                              setShowDeletePermissionConfirm(true)
-                              setShowPermissionMenu(null)
-                            }}
-                            className="flex items-center w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-600"
-                          >
-                            <FiTrash2 className="w-3 h-3 mr-2" />
-                            Delete Permission
-                          </button>
-                        </div>
-                      )}
-                    </div>
                   </div>
-                  <p 
+                  <p
                     className="text-xs text-gray-600 cursor-pointer"
                     onClick={() => setSelectedPermission(permission.id)}
                   >
@@ -252,11 +253,11 @@ function RoleManagment() {
 
       {/* Edit Role Modal */}
       {showEditRole && selectedRole && (
-        <EditRole 
-          role={selectedRole} 
+        <EditRole
+          role={selectedRole}
           onClose={() => {
-            setShowEditRole(false)
-            setSelectedRole(null)
+            setShowEditRole(false);
+            setSelectedRole(null);
           }}
           onSuccess={fetchData}
         />
@@ -266,15 +267,18 @@ function RoleManagment() {
       {showDeleteConfirm && roleToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Role</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Delete Role
+            </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete the role "{roleToDelete.name}"? This action cannot be undone.
+              Are you sure you want to delete the role "{roleToDelete.name}"?
+              This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
-                  setShowDeleteConfirm(false)
-                  setRoleToDelete(null)
+                  setShowDeleteConfirm(false);
+                  setRoleToDelete(null);
                 }}
                 className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -282,9 +286,10 @@ function RoleManagment() {
               </button>
               <button
                 onClick={handleDeleteRole}
-                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700"
+                disabled={deletingRole}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Delete
+                {deletingRole ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
@@ -295,15 +300,18 @@ function RoleManagment() {
       {showDeletePermissionConfirm && permissionToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Permission</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Delete Permission
+            </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete the permission "{permissionToDelete.name}"? This action cannot be undone.
+              Are you sure you want to delete the permission "
+              {permissionToDelete.name}"? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
-                  setShowDeletePermissionConfirm(false)
-                  setPermissionToDelete(null)
+                  setShowDeletePermissionConfirm(false);
+                  setPermissionToDelete(null);
                 }}
                 className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -320,7 +328,7 @@ function RoleManagment() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default RoleManagment
+export default RoleManagment;

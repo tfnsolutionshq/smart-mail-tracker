@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -27,6 +27,7 @@ function AddUser({ onClose, onSuccess }) {
 
   const [integrationLoading, setIntegrationLoading] = useState(true);
   const [hasActiveIntegration, setHasActiveIntegration] = useState(false);
+  const [activeTab, setActiveTab] = useState("lookup");
   const [searchId, setSearchId] = useState("");
   const [searching, setSearching] = useState(false);
   const [lookupPerformed, setLookupPerformed] = useState(false);
@@ -45,7 +46,7 @@ function AddUser({ onClose, onSuccess }) {
         setHasActiveIntegration(active);
         showNotification(
           active ? "Active Integrations confirmed" : "No Active Integrations",
-          active ? "success" : "info"
+          active ? "success" : "info",
         );
       }
     } catch (error) {
@@ -153,6 +154,33 @@ function AddUser({ onClose, onSuccess }) {
       <p className="text-sm text-gray-600">
         Checking for an active integration...
       </p>
+    </div>
+  );
+
+  const renderTabs = () => (
+    <div className="flex border-b border-gray-200 mb-4">
+      <button
+        type="button"
+        onClick={() => setActiveTab("lookup")}
+        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+          activeTab === "lookup"
+            ? "border-blue-600 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+        }`}
+      >
+        Look Up by ID
+      </button>
+      <button
+        type="button"
+        onClick={() => setActiveTab("manual")}
+        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+          activeTab === "manual"
+            ? "border-blue-600 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+        }`}
+      >
+        Manual Entry
+      </button>
     </div>
   );
 
@@ -457,7 +485,12 @@ function AddUser({ onClose, onSuccess }) {
         {integrationLoading
           ? renderIntegrationLoading()
           : hasActiveIntegration
-            ? renderSearchBar()
+            ? (
+              <div>
+                {renderTabs()}
+                {activeTab === "lookup" ? renderSearchBar() : renderForm()}
+              </div>
+            )
             : renderForm()}
       </div>
     </div>,

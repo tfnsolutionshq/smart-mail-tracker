@@ -12,6 +12,7 @@ function EditRole({ role, onClose, onSuccess }) {
   const [step, setStep] = useState(1) // 1: Edit Role, 2: Update Permissions
   const [loading, setLoading] = useState(false)
   const [availablePermissions, setAvailablePermissions] = useState([])
+  const [permissionsLoading, setPermissionsLoading] = useState(false)
   const [selectedPermissions, setSelectedPermissions] = useState([])
   const [formData, setFormData] = useState({
     name: role?.name || '',
@@ -28,6 +29,7 @@ function EditRole({ role, onClose, onSuccess }) {
   }, [step, role])
 
   const fetchPermissions = async () => {
+    setPermissionsLoading(true)
     try {
       const response = await roleAPI.getAvailablePermissions(token)
       if (response.success && response.permissions) {
@@ -36,6 +38,8 @@ function EditRole({ role, onClose, onSuccess }) {
     } catch (error) {
       console.error('Error fetching permissions:', error)
       showNotification('Failed to fetch permissions', 'error')
+    } finally {
+      setPermissionsLoading(false)
     }
   }
 
@@ -189,7 +193,13 @@ function EditRole({ role, onClose, onSuccess }) {
           <form onSubmit={handleUpdatePermissions} className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">Available Permissions</label>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              {permissionsLoading ? (
+                <div className="flex flex-col items-center justify-center py-6 space-y-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  <p className="text-xs text-gray-600">Loading permissions...</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
                 {availablePermissions.map((permission) => (
                   <label key={permission.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded">
                     <input
@@ -205,6 +215,7 @@ function EditRole({ role, onClose, onSuccess }) {
                   </label>
                 ))}
               </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 pt-3">
