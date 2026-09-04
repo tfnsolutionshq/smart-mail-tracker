@@ -20,7 +20,7 @@ import { useAuth } from "../context/AuthContext";
 export default function Sidebar({ isOpen, onToggle }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, user } = useAuth();
+  const { role } = useAuth();
 
   const getActiveItem = () => {
     const path = location.pathname;
