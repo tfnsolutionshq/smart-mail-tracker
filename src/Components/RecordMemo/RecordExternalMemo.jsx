@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { FiArrowLeft, FiChevronRight } from 'react-icons/fi'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { FiArrowLeft, FiChevronRight, FiRefreshCw } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { categoryAPI } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
@@ -9,6 +9,10 @@ export default function RecordExternalMemo() {
   const location = useLocation()
   const { token } = useAuth()
   const [categories, setCategories] = useState([])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [categoriesError, setCategoriesError] = useState(null)
+  const retryTimeoutRef = useRef(null)
+  const MAX_RETRIES = 3
   const [isCustomCategory, setIsCustomCategory] = useState(false)
   
   const previousData = location.state || {}
@@ -23,21 +27,46 @@ export default function RecordExternalMemo() {
     description: previousData.description || ''
   })
 
-  useEffect(() => {
-    if (token) {
-      const fetchCategories = async () => {
-        try {
-          const response = await categoryAPI.getCategories(token)
-          if (response.status && response.data) {
-            setCategories(response.data.data || [])
-          }
-        } catch (error) {
-          console.error('Error fetching categories:', error)
-        }
+  const fetchCategories = useCallback(async (attempt = 0) => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+      retryTimeoutRef.current = null
+    }
+
+    setCategoriesLoading(true)
+    setCategoriesError(null)
+
+    try {
+      const response = await categoryAPI.getCategories(token)
+      if (response.status && response.data) {
+        setCategories(response.data.data || [])
+        setCategoriesLoading(false)
+      } else {
+        throw new Error('Unexpected response format from the server.')
       }
-      fetchCategories()
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+      if (attempt < MAX_RETRIES) {
+        const delay = Math.pow(2, attempt) * 1000
+        retryTimeoutRef.current = setTimeout(() => fetchCategories(attempt + 1), delay)
+        return
+      }
+      setCategoriesError(error.message || 'Failed to load categories. Please try again.')
+      setCategoriesLoading(false)
     }
   }, [token])
+
+  useEffect(() => {
+    if (token) {
+      fetchCategories(0)
+    }
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
+    }
+  }, [token, fetchCategories])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -166,17 +195,39 @@ export default function RecordExternalMemo() {
           </div>
           <div>
             <label className="text-sm text-gray-700">Category <span className="text-red-500">*</span></label>
-            <select 
-              value={isCustomCategory ? 'Other' : form.category} 
-              onChange={handleCategoryChange} 
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]"
-            >
-              <option value="">Select Category</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.name}>{cat.name}</option>
-              ))}
-              <option value="Other">Other (Enter custom)</option>
-            </select>
+            {categoriesError ? (
+              <div className="mt-1 flex items-center justify-between gap-3 border border-red-200 bg-red-50 rounded-lg px-3 py-2">
+                <p className="text-xs text-red-600">{categoriesError}</p>
+                <button
+                  type="button"
+                  onClick={() => fetchCategories(0)}
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  <FiRefreshCw className="w-3.5 h-3.5" />
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <select 
+                value={isCustomCategory ? 'Other' : form.category} 
+                onChange={handleCategoryChange} 
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]"
+              >
+                <option value="">
+                  {categoriesLoading ? 'Loading categories...' : 'Select Category'}
+                </option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+                <option value="Other">Other (Enter custom)</option>
+              </select>
+            )}
+            {categoriesLoading && !categoriesError && (
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                <FiRefreshCw className="w-3 h-3 animate-spin" />
+                Fetching categories...
+              </p>
+            )}
             {isCustomCategory && (
               <input 
                 name="category" 

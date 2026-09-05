@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
@@ -11,7 +11,8 @@ import {
   FiHome,
   FiUser,
   FiCalendar,
-  FiSearch
+  FiSearch,
+  FiRefreshCw
 } from 'react-icons/fi'
 
 export default function RecordMemo() {
@@ -24,56 +25,92 @@ export default function RecordMemo() {
   const { user, token } = useAuth()
   const [memos, setMemos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const abortControllerRef = useRef(null)
+  const retryTimeoutRef = useRef(null)
+  const MAX_RETRIES = 3
+
+  const fetchMemos = useCallback(async (attempt = 0) => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+      retryTimeoutRef.current = null
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    abortControllerRef.current = new AbortController()
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: 'https://memo.smt.tfnsolutions.us/api/v1/external-memos',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        signal: abortControllerRef.current.signal
+      };
+      const response = await axios.request(config);
+      if (response.data && response.data.data && response.data.data.data) {
+        const allMemos = response.data.data.data;
+        const userMemos = allMemos.filter(memo => {
+          const isAssigned = String(memo.assigned_officer_id) === String(user.id);
+          const isRecorder = String(memo.recorded_by_user_id) === String(user.id);
+          return isAssigned || isRecorder;
+        }).map(memo => {
+          let direction = 'External';
+          if (String(memo.assigned_officer_id) === String(user.id)) direction = 'Received';
+          else if (String(memo.recorded_by_user_id) === String(user.id)) direction = 'Sent';
+
+          return {
+            id: memo.tracking_id || memo.id,
+            uuid: memo.id,
+            type: direction,
+            originalType: 'External',
+            ref: memo.reference_number || 'N/A',
+            subject: memo.subject || 'No Subject',
+            origin: memo.sender_organization || 'Unknown',
+            department: memo.assigned_to?.department_name || 'N/A',
+            officer: memo.assigned_to?.name || 'Unassigned',
+            received: new Date(memo.date_received).toLocaleDateString() + ' ' + new Date(memo.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: memo.status
+          };
+        });
+        setMemos(userMemos);
+        setLoading(false);
+      } else {
+        throw new Error('Unexpected response format from the server.');
+      }
+    } catch (err) {
+      if (axios.isCancel(err)) return;
+      console.error('Error fetching external memos:', err);
+      if (attempt < MAX_RETRIES) {
+        const delay = Math.pow(2, attempt) * 1000;
+        retryTimeoutRef.current = setTimeout(() => fetchMemos(attempt + 1), delay);
+        return;
+      }
+      setError(err.message || 'Failed to load memos. Please try again.');
+      setLoading(false);
+    }
+  }, [token, user])
 
   useEffect(() => {
     if (token && user) {
-      const fetchMemos = async () => {
-        try {
-          const config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: 'https://memo.smt.tfnsolutions.us/api/v1/external-memos',
-            headers: { 
-              'Authorization': `Bearer ${token}` 
-            }
-          };
-          const response = await axios.request(config);
-          if (response.data && response.data.data && response.data.data.data) {
-            const allMemos = response.data.data.data;
-            const userMemos = allMemos.filter(memo => {
-              const isAssigned = String(memo.assigned_officer_id) === String(user.id);
-              const isRecorder = String(memo.recorded_by_user_id) === String(user.id);
-              return isAssigned || isRecorder;
-            }).map(memo => {
-              let direction = 'External';
-              if (String(memo.assigned_officer_id) === String(user.id)) direction = 'Received';
-              else if (String(memo.recorded_by_user_id) === String(user.id)) direction = 'Sent';
-              
-              return {
-                id: memo.tracking_id || memo.id,
-                uuid: memo.id,
-                type: direction,
-                originalType: 'External',
-                ref: memo.reference_number || 'N/A',
-                subject: memo.subject || 'No Subject',
-                origin: memo.sender_organization || 'Unknown',
-                department: memo.assigned_to?.department_name || 'N/A',
-                officer: memo.assigned_to?.name || 'Unassigned',
-                received: new Date(memo.date_received).toLocaleDateString() + ' ' + new Date(memo.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                status: memo.status
-              };
-            });
-            setMemos(userMemos);
-          }
-        } catch (error) {
-          console.error('Error fetching external memos:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchMemos();
+      fetchMemos(0);
     }
-  }, [token, user]);
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [token, user, fetchMemos]);
 
   const filtered = useMemo(() => {
     return memos.filter((m) => {
@@ -290,7 +327,21 @@ export default function RecordMemo() {
 
         <div className="overflow-x-auto scrollbar-thin">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading memos...</div>
+            <div className="p-8 text-center text-gray-500 flex items-center justify-center gap-2">
+              <FiRefreshCw className="w-4 h-4 animate-spin" />
+              Loading memos...
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center">
+              <p className="text-red-500 text-sm mb-3">{error}</p>
+              <button
+                onClick={() => fetchMemos(0)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                <FiRefreshCw className="w-4 h-4" />
+                Retry
+              </button>
+            </div>
           ) : (
             <table className="min-w-[1100px]">
               <thead>
