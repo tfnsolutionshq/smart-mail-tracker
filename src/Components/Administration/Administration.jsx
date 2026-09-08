@@ -17,6 +17,7 @@ import AddDepartment from './AddDepartment'
 import AddCategory from './AddCategory'
 import BulkUpload from './BulkUpload'
 import RecordMemoStats from './RecordMemoStats'
+import LoadingSpinner from '../Shared/LoadingSpinner'
 
 function Administrations() {
   const [activeTab, setActiveTab] = useState('Users')
@@ -355,9 +356,7 @@ function Administrations() {
             {/* Users Table */}
             <div className="overflow-x-auto">
               {loading ? (
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                </div>
+                <LoadingSpinner />
               ) : error ? (
                 <div className="flex justify-center items-center py-8">
                   <div className="text-center">

@@ -14,6 +14,7 @@ import {
   FiSearch,
   FiRefreshCw
 } from 'react-icons/fi'
+import LoadingSpinner from '../Shared/LoadingSpinner'
 
 export default function RecordMemo() {
   const navigate = useNavigate()
@@ -327,10 +328,7 @@ export default function RecordMemo() {
 
         <div className="overflow-x-auto scrollbar-thin">
           {loading ? (
-            <div className="p-8 text-center text-gray-500 flex items-center justify-center gap-2">
-              <FiRefreshCw className="w-4 h-4 animate-spin" />
-              Loading memos...
-            </div>
+            <LoadingSpinner />
           ) : error ? (
             <div className="p-8 text-center">
               <p className="text-red-500 text-sm mb-3">{error}</p>

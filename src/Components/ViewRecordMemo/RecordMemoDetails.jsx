@@ -6,6 +6,7 @@ import { useNotification } from '../../context/NotificationContext'
 import ShareMemo from './ShareMemo'
 import ForwardMemo from './ForwardMemo'
 import ConfirmationModal from './ConfirmationModal'
+import LoadingSpinner from '../Shared/LoadingSpinner'
 import axios from 'axios'
 
 export default function RecordMemoDetails() {
@@ -172,7 +173,7 @@ export default function RecordMemoDetails() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-gray-300 border-t-black rounded-full animate-spin" />
+        <LoadingSpinner />
       </div>
     )
   }

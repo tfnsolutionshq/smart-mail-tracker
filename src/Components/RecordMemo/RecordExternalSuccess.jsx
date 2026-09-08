@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { useNotification } from "../../context/NotificationContext";
 
 export default function RecordExternalSuccess() {
@@ -9,16 +10,18 @@ export default function RecordExternalSuccess() {
   const { showNotification } = useNotification();
   const state = location.state || {};
 
-  console.log("over here: ", location.state);
-
   // Use data from state or fallbacks
-  const trackingId = state.memo?.tracking_id || state.reference || "N/A";
+  const trackingId =
+    state.memo?.tracking_id || state.trackingId || state.reference || "N/A";
   const reference = state.reference || "N/A";
   const senderOrg = state.senderOrg || "N/A";
-  const category = state.category || "N/A";
   const department = state.department || "N/A";
   const officer = state.officer || "N/A";
-  const qrCode = state.memo?.qr_code || state.memo?.qr_code_url;
+  const baseUrl = import.meta.env.VITE_CLIENT_BASE_URL || "";
+  const trackerUrl =
+    trackingId !== "N/A"
+      ? `${baseUrl}/memo-tracker-details/${trackingId}`
+      : null;
 
   useEffect(() => {
     if (trackingId !== "N/A") {
@@ -61,12 +64,12 @@ export default function RecordExternalSuccess() {
                 Copy
               </button>
             </div>
-            {qrCode && (
+            {trackerUrl && (
               <div className="mt-4 flex justify-center">
-                <img src={qrCode} alt="QR Code" className="w-24 h-24" />
+                <QRCodeSVG value={trackerUrl} size={96} />
               </div>
             )}
-            {!qrCode && (
+            {!trackerUrl && (
               <div className="mt-4 flex justify-center">
                 <div className="w-24 h-24 rounded-lg border border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-400">
                   No QR

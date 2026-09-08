@@ -53,10 +53,13 @@ export default function RecordExternalReview() {
       };
 
       const response = await axios.request(config);
+      const memo = response.data?.memo || response.data?.data || response.data;
+      const trackingId = memo?.tracking_id;
       showNotification("External memo recorded successfully", "success");
       navigate("/record-external-success", {
         state: {
-          memo: response.data?.data || response.data, // Handle potentially nested data wrapper
+          memo,
+          trackingId,
           ...state,
         },
       });
@@ -257,18 +260,17 @@ export default function RecordExternalReview() {
 
         <div className="flex items-center justify-between mt-6">
           <button
-            className={`px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}
             onClick={() => navigate("/record-external-assignment", { state })}
             disabled={submitting}
           >
             Previous
           </button>
           <button
-            className={`px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg flex items-center gap-2 ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
+            className={`px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg flex items-center gap-2 ${submitting ? "opacity-60 cursor-not-allowed" : ""}`}
             onClick={handleSubmit}
             disabled={submitting}
           >
-            {submitting && <FiRefreshCw className="w-4 h-4 animate-spin" />}
             {submitting ? "Submitting..." : "Submit"}
           </button>
         </div>
