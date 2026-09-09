@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { FiSearch, FiUpload, FiPlus, FiMoreVertical, FiEdit, FiEye, FiKey, FiPower, FiTrash2 } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { userAPI } from '../../services/api'
+import { userAPI, integrationAPI } from '../../services/api'
 import RoleManagment from './RoleManagment'
 import Departments from './Departments'
 import MemoCategories from './MemoCategories'
@@ -44,6 +44,7 @@ function Administrations() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalUsers, setTotalUsers] = useState(0)
+  const [hasActiveIntegration, setHasActiveIntegration] = useState(false)
   const userMenuRef = useRef(null)
 
   const tabs = ['Users', 'Roles & Permissions', 'Departments', 'Memo Categories', 'Activity Logs', 'Record Memo']
@@ -167,6 +168,20 @@ function Administrations() {
     return () => document.removeEventListener('mousedown', onMouseDown)
   }, [showUserMenu])
 
+  useEffect(() => {
+    const checkIntegrationStatus = async () => {
+      try {
+        const response = await integrationAPI.getIntegrationStatus()
+        if (response.status && response.data) {
+          setHasActiveIntegration(response.data.has_active_integration)
+        }
+      } catch (error) {
+        console.error('Error checking integration status:', error)
+      }
+    }
+    checkIntegrationStatus()
+  }, [])
+
   const getRoleColor = (role) => {
     const colors = {
       'Department Head': 'bg-green-100 text-green-800',
@@ -231,23 +246,25 @@ function Administrations() {
             <FiUpload className="w-4 h-4" />
             Bulk Upload
           </button>
-          <button 
-            onClick={() => {
-              if (activeTab === 'Users') setShowAddUser(true)
-              else if (activeTab === 'Roles & Permissions') setShowAddRole(true)
-              else if (activeTab === 'Departments') setShowAddDepartment(true)
-              else if (activeTab === 'Memo Categories') setShowAddCategory(true)
-            }}
-            className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 flex items-center gap-2"
-          >
-            <FiPlus className="w-4 h-4" />
-            {activeTab === 'Users' && 'Add User'}
-            {activeTab === 'Roles & Permissions' && 'Add Role'}
-            {activeTab === 'Departments' && 'Add Department'}
-            {activeTab === 'Memo Categories' && 'Add Category'}
-            {/* {activeTab === 'System Settings' && 'Save Settings'} */}
-            {!['Users', 'Roles & Permissions', 'Departments', 'Memo Categories'].includes(activeTab) && 'Add Item'}
-          </button>
+          {!(activeTab === 'Departments' && hasActiveIntegration) && (
+            <button 
+              onClick={() => {
+                if (activeTab === 'Users') setShowAddUser(true)
+                else if (activeTab === 'Roles & Permissions') setShowAddRole(true)
+                else if (activeTab === 'Departments') setShowAddDepartment(true)
+                else if (activeTab === 'Memo Categories') setShowAddCategory(true)
+              }}
+              className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 flex items-center gap-2"
+            >
+              <FiPlus className="w-4 h-4" />
+              {activeTab === 'Users' && 'Add User'}
+              {activeTab === 'Roles & Permissions' && 'Add Role'}
+              {activeTab === 'Departments' && 'Add Department'}
+              {activeTab === 'Memo Categories' && 'Add Category'}
+              {/* {activeTab === 'System Settings' && 'Save Settings'} */}
+              {!['Users', 'Roles & Permissions', 'Departments', 'Memo Categories'].includes(activeTab) && 'Add Item'}
+            </button>
+          )}
         </div>
       </div>
 

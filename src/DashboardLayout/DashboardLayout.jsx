@@ -7,7 +7,7 @@ import Sidebar from "./Sidebar";
 import { useAuth } from "../context/AuthContext";
 
 export default function DashboardLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
