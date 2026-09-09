@@ -73,6 +73,12 @@ export const userAPI = {
     return response.data;
   },
 
+  getDepartmentUsers: async (departmentId, token) => {
+    const apiClient = createApiClient(token);
+    const response = await apiClient.get(`/users/departments/${departmentId}`);
+    return response.data;
+  },
+
   getUserById: async (userId, token) => {
     const apiClient = createApiClient(token);
     const response = await apiClient.get(`/users/${userId}`);

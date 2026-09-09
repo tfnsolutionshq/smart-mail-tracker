@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { FiArrowLeft, FiSearch, FiChevronLeft, FiChevronRight, FiEye } from 'react-icons/fi'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
+import LoadingSpinner from '../Shared/LoadingSpinner'
 import axios from 'axios'
 
 export default function RecordMemoInbox() {
@@ -113,7 +114,7 @@ export default function RecordMemoInbox() {
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="w-8 h-8 border-4 border-gray-300 border-t-black rounded-full animate-spin" />
+            <LoadingSpinner />
           </div>
         ) : filteredMemos.length === 0 ? (
           <div className="text-center py-12">

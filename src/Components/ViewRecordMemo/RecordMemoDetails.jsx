@@ -201,13 +201,15 @@ export default function RecordMemoDetails() {
             <FiShare2 className="w-4 h-4" />
             Share
           </button>
-          <button
-            onClick={() => setShowAcknowledgeModal(true)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
-          >
-            <FiCheckCircle className="w-4 h-4" />
-            Acknowledge
-          </button>
+          {memo.status?.toLowerCase() !== 'completed' && (
+            <button
+              onClick={() => setShowAcknowledgeModal(true)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
+            >
+              <FiCheckCircle className="w-4 h-4" />
+              Acknowledge
+            </button>
+          )}
           <button
             onClick={() => setShowForwardModal(true)}
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"

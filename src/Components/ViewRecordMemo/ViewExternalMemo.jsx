@@ -13,7 +13,7 @@ export default function ViewExternalMemo() {
   const [searchParams] = useSearchParams()
   const memoId = searchParams.get('id')
   const { showNotification } = useNotification()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   
   const [memo, setMemo] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -294,6 +294,8 @@ export default function ViewExternalMemo() {
     )
   }
 
+  const isOriginalSender = String(memo.recorded_by_user_id) === String(user?.id)
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <div className="flex items-center justify-between">
@@ -314,11 +316,15 @@ export default function ViewExternalMemo() {
             <FiArrowUpRight className="w-4 h-4" />
             Forward
           </button>
-          <button type="button" onClick={() => setShowCompleteModal(true)} className="px-3 py-2 bg-gray-900 text-white rounded-lg text-sm">Mark Complete</button>
-          <button type="button" onClick={() => setShowDeleteModal(true)} className="px-3 py-2 bg-red-600 text-white rounded-lg text-sm flex items-center gap-2">
-            <FiTrash2 className="w-4 h-4" />
-            Delete
-          </button>
+          {isOriginalSender && (
+            <button type="button" onClick={() => setShowCompleteModal(true)} className="px-3 py-2 bg-gray-900 text-white rounded-lg text-sm">Mark Complete</button>
+          )}
+          {isOriginalSender && (
+            <button type="button" onClick={() => setShowDeleteModal(true)} className="px-3 py-2 bg-red-600 text-white rounded-lg text-sm flex items-center gap-2">
+              <FiTrash2 className="w-4 h-4" />
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -379,22 +385,24 @@ export default function ViewExternalMemo() {
               <div className="text-xs text-gray-600">Description</div>
               <div className="mt-1 text-sm text-gray-900">{memo.description || 'No description provided.'}</div>
             </div>
-            <div className="mt-4">
-              <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3">
-                <div>
-                  <div className="text-sm font-medium text-gray-900">Public Tracking</div>
-                  <div className="text-xs text-gray-600">{memo.is_publicly_trackable ? 'External parties can track this memo' : 'Public tracking is disabled'}</div>
+            {isOriginalSender && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">Public Tracking</div>
+                    <div className="text-xs text-gray-600">{memo.is_publicly_trackable ? 'External parties can track this memo' : 'Public tracking is disabled'}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleToggleTrackability}
+                    disabled={isProcessingAction}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${memo.is_publicly_trackable ? 'bg-gray-900' : 'bg-gray-300'} ${isProcessingAction ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${memo.is_publicly_trackable ? 'translate-x-5' : 'translate-x-1'}`} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleToggleTrackability}
-                  disabled={isProcessingAction}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${memo.is_publicly_trackable ? 'bg-gray-900' : 'bg-gray-300'} ${isProcessingAction ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                >
-                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${memo.is_publicly_trackable ? 'translate-x-5' : 'translate-x-1'}`} />
-                </button>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 p-5">
