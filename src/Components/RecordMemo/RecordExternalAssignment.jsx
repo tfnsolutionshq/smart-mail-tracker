@@ -1,8 +1,205 @@
-import React, { useState, useEffect } from "react";
-import { FiArrowLeft, FiChevronRight, FiCheck, FiHome } from "react-icons/fi";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from "react";
+import {
+  FiArrowLeft,
+  FiChevronRight,
+  FiCheck,
+  FiHome,
+  FiSearch,
+  FiChevronDown,
+} from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { departmentAPI, userAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+
+const mergeDepartments = (base, extra) => {
+  const map = new Map();
+  [...base, ...extra].forEach((d) => map.set(String(d.id), d));
+  return Array.from(map.values());
+};
+
+function SearchableDepartmentDropdown({
+  value,
+  onChange,
+  token,
+  departments,
+  onDepartmentsChange,
+  loading = false,
+  error = null,
+  onRetry,
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [options, setOptions] = useState(departments);
+  const [searching, setSearching] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
+  const containerRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+  const selectedDept = departments.find((d) => String(d.id) === String(value));
+
+  useEffect(() => {
+    setOptions((prev) => mergeDepartments(prev, departments));
+  }, [departments]);
+
+  useLayoutEffect(() => {
+    if (open && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      const spaceBelow = viewportH - rect.bottom;
+      const DROPDOWN_ESTIMATE = 240;
+      setDropUp(spaceBelow < DROPDOWN_ESTIMATE);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () =>
+        document.removeEventListener("mousedown", handleOutsideClick);
+    }
+  }, [open]);
+
+  const fetchDepartments = async (term) => {
+    if (!term.trim()) {
+      setOptions(departments);
+      return;
+    }
+    setSearching(true);
+    try {
+      const response = await departmentAPI.getDepartments(token, {
+        search: term.trim(),
+        per_page: 600,
+      });
+      const results =
+        response.status && response.data ? response.data.data : [];
+      setOptions(results);
+    } catch (error) {
+      console.error("Department search error:", error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleQueryChange = (e) => {
+    const term = e.target.value;
+    setQuery(term);
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => fetchDepartments(term), 300);
+  };
+
+  const handleSelect = (dept) => {
+    onChange(dept.id);
+    if (onDepartmentsChange) {
+      onDepartmentsChange((prev) => mergeDepartments(prev, [dept]));
+    }
+    setOpen(false);
+    setQuery("");
+  };
+
+  const handleOpenToggle = () => {
+    if (loading) return;
+    setOpen((prev) => !prev);
+    if (!open) {
+      setQuery("");
+      setOptions(departments);
+    }
+  };
+
+  return (
+    <div ref={containerRef} className="relative flex-1">
+      <button
+        type="button"
+        onClick={handleOpenToggle}
+        disabled={loading}
+        className="w-full overflow-hidden px-3 py-2 border border-gray-300 rounded-lg text-sm bg-[#F3F3F5] flex items-center justify-between gap-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <span
+          className={`flex-1 min-w-0 truncate ${
+            selectedDept ? "text-gray-800" : "text-gray-400"
+          }`}
+        >
+          {loading
+            ? "Loading departments..."
+            : selectedDept
+              ? selectedDept.name
+              : "Select department"}
+        </span>
+        <FiChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+      </button>
+
+      {error && (
+        <div className="mt-1 flex items-center gap-2 justify-between text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <span className="flex-1 min-w-0 truncate">{error}</span>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
+
+      {open && (
+        <div
+          className={`absolute z-50 w-full max-w-[calc(100vw-4rem)] bg-white border border-gray-300 rounded-lg shadow-lg flex flex-col ${
+            dropUp ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
+          <div className="p-2 border-b border-gray-200 flex items-center gap-2">
+            <FiSearch className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search departments..."
+              value={query}
+              onChange={handleQueryChange}
+              className="w-full text-sm outline-none focus:ring-0"
+            />
+          </div>
+          <ul className="max-h-48 overflow-y-auto py-1">
+            {searching ? (
+              <li className="px-3 py-2 text-sm text-gray-500">Searching...</li>
+            ) : options.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-gray-500">
+                No departments found
+              </li>
+            ) : (
+              options.map((dept) => (
+                <li key={dept.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(dept)}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 ${
+                      String(dept.id) === String(value)
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {dept.name}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RecordExternalAssignment() {
   const navigate = useNavigate();
@@ -13,6 +210,7 @@ export default function RecordExternalAssignment() {
   const [departments, setDepartments] = useState([]);
   const [officers, setOfficers] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [departmentsError, setDepartmentsError] = useState(null);
   const [loadingOfficers, setLoadingOfficers] = useState(false);
 
   const [departmentId, setDepartmentId] = useState(
@@ -21,28 +219,38 @@ export default function RecordExternalAssignment() {
   const [officerId, setOfficerId] = useState(previousData.officerId || "");
   const [remarks, setRemarks] = useState(previousData.remarks || "");
 
+  const fetchDepartments = useCallback(async () => {
+    setLoadingDepartments(true);
+    setDepartmentsError(null);
+    try {
+      const deptRes = await departmentAPI.getDepartments(token, {
+        per_page: 600,
+      });
+      if (deptRes.status && deptRes.data) {
+        setDepartments(deptRes.data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      setDepartmentsError("Failed to load departments. Please try again.");
+    } finally {
+      setLoadingDepartments(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!token) return;
-
-    const fetchDepartments = async () => {
-      try {
-        const deptRes = await departmentAPI.getDepartments(token);
-        if (deptRes.status && deptRes.data) {
-          setDepartments(deptRes.data.data || []);
-        }
-      } catch (error) {
-        console.error("Error fetching departments:", error);
-      } finally {
-        setLoadingDepartments(false);
-      }
-    };
     fetchDepartments();
-  }, [token]);
+  }, [fetchDepartments, token]);
 
   useEffect(() => {
     if (!token || !departmentId) {
       setOfficers([
-        { id: "none", first_name: "No", last_name: "Department", role: { name: "User" } },
+        {
+          id: "none",
+          first_name: "No",
+          last_name: "Department",
+          role: { name: "User" },
+        },
       ]);
       setLoadingOfficers(false);
       return;
@@ -185,26 +393,19 @@ export default function RecordExternalAssignment() {
               Assign to Department <span className="text-red-500">*</span>
             </label>
             <div className="mt-1 flex items-center gap-2">
-              <span className="w-8 h-10 rounded-lg bg-[#F3F3F5] border border-gray-300 flex items-center justify-center">
+              <span className="w-8 h-10 rounded-lg bg-[#F3F3F5] border border-gray-300 flex items-center justify-center flex-shrink-0">
                 <FiHome className="w-4 h-4 text-gray-600" />
               </span>
-              <select
+              <SearchableDepartmentDropdown
                 value={departmentId}
-                onChange={(e) => setDepartmentId(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-[#F3F3F5]"
-                disabled={loadingDepartments}
-              >
-                <option value="">
-                  {loadingDepartments
-                    ? "Loading departments..."
-                    : "Select department"}
-                </option>
-                {departments.map((dept) => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setDepartmentId}
+                token={token}
+                departments={departments}
+                onDepartmentsChange={setDepartments}
+                loading={loadingDepartments}
+                error={departmentsError}
+                onRetry={fetchDepartments}
+              />
             </div>
           </div>
 

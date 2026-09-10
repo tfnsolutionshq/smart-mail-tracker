@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../context/AuthContext";
@@ -10,6 +10,12 @@ export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const isMobile = window.matchMedia("(max-width: 1023px)").matches;
+    if (isMobile) setSidebarOpen(false);
+  }, [location.pathname]);
 
   const shouldShowPasswordBanner =
     user &&

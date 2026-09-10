@@ -151,6 +151,7 @@ export const departmentAPI = {
     const params = {};
     if (filters.page) params.page = filters.page;
     if (filters.search) params.search = filters.search;
+    if (filters.per_page) params.per_page = filters.per_page;
     const response = await apiClient.get("/departments", { params });
     return response.data;
   },
