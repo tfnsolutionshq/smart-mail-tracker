@@ -1,7 +1,224 @@
-import { useState, useEffect, useCallback } from "react";
-import { FiX, FiCheck, FiEye, FiBell, FiChevronDown } from "react-icons/fi";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useLayoutEffect,
+} from "react";
+import {
+  FiX,
+  FiCheck,
+  FiEye,
+  FiBell,
+  FiChevronDown,
+  FiSearch,
+} from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { departmentAPI, roleAPI } from "../../services/api";
+
+function SearchableDepartmentDropdown({
+  value,
+  onChange,
+  token,
+  departments,
+  onDepartmentsChange,
+  loading = false,
+  error = null,
+  onRetry,
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [options, setOptions] = useState(departments);
+  const [searching, setSearching] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
+  const containerRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+  const selectedDept = departments.find((d) => String(d.id) === String(value));
+
+  useEffect(() => {
+    if (departments.length > 0) {
+      setOptions(departments);
+    }
+  }, [departments]);
+
+  useLayoutEffect(() => {
+    if (open && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      const spaceBelow = viewportH - rect.bottom;
+      const DROPDOWN_ESTIMATE = 240;
+      setDropUp(spaceBelow < DROPDOWN_ESTIMATE);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () =>
+        document.removeEventListener("mousedown", handleOutsideClick);
+    }
+  }, [open]);
+
+  const fetchDepartments = async (term) => {
+    if (!term.trim()) {
+      setOptions(departments);
+      return;
+    }
+    setSearching(true);
+    try {
+      const response = await departmentAPI.getDepartments(token, {
+        search: term.trim(),
+        per_page: 600,
+      });
+      const results =
+        response.status && response.data ? response.data.data : [];
+      setOptions(results);
+    } catch (error) {
+      console.error("Department search error:", error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleQueryChange = (e) => {
+    const term = e.target.value;
+    setQuery(term);
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => fetchDepartments(term), 300);
+  };
+
+  const handleSelect = (dept) => {
+    onChange(dept.id);
+    if (onDepartmentsChange) {
+      onDepartmentsChange((prev) => {
+        const exists = prev.some((d) => String(d.id) === String(dept.id));
+        return exists ? prev : [...prev, dept];
+      });
+    }
+    setOpen(false);
+    setQuery("");
+  };
+
+  const handleOpenToggle = () => {
+    if (loading) return;
+    setOpen((prev) => !prev);
+    if (!open) {
+      setQuery("");
+      setOptions(departments);
+    }
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={handleOpenToggle}
+        disabled={loading}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm bg-white flex items-center justify-between gap-2 text-left disabled:bg-gray-50 disabled:cursor-not-allowed"
+      >
+        <span
+          className={`flex-1 min-w-0 truncate ${
+            selectedDept ? "text-gray-900" : "text-gray-400"
+          }`}
+        >
+          {loading
+            ? "Loading departments..."
+            : error
+              ? "Failed to load departments"
+              : selectedDept
+                ? selectedDept.name
+                : "No department restriction"}
+        </span>
+        <FiChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+      </button>
+
+      {error && !loading && (
+        <div className="mt-1 flex items-center gap-2 justify-between text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          <span className="flex-1 min-w-0 truncate">
+            Failed to load departments
+          </span>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
+
+      {open && (
+        <div
+          className={`absolute z-20 w-full bg-white border border-gray-300 rounded-md shadow-lg flex flex-col ${
+            dropUp ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
+          <div className="p-2 border-b border-gray-200 flex items-center gap-2">
+            <FiSearch className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search departments..."
+              value={query}
+              onChange={handleQueryChange}
+              className="w-full text-sm outline-none focus:ring-0"
+            />
+          </div>
+          <ul className="max-h-48 overflow-y-auto py-1">
+            {searching ? (
+              <li className="px-3 py-2 text-sm text-gray-500">Searching...</li>
+            ) : options.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-gray-500">
+                No departments found
+              </li>
+            ) : (
+              <>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange("");
+                      setOpen(false);
+                      setQuery("");
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                      !value ? "bg-gray-50 text-gray-900" : "text-gray-900"
+                    }`}
+                  >
+                    No department
+                  </button>
+                </li>
+                {options.map((dept) => (
+                  <li key={dept.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(dept)}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                        String(dept.id) === String(value)
+                          ? "bg-gray-50 text-gray-900"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {dept.name}
+                    </button>
+                  </li>
+                ))}
+              </>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function AddStep({ isOpen, onClose, onAddStep }) {
   const { token } = useAuth();
@@ -10,6 +227,8 @@ function AddStep({ isOpen, onClose, onAddStep }) {
   const [description, setDescription] = useState("");
   const [assignedRoles, setAssignedRoles] = useState([]);
   const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
+  const [rolesDropUp, setRolesDropUp] = useState(false);
+  const rolesContainerRef = useRef(null);
   const [requiredDepartmentId, setRequiredDepartmentId] = useState("");
   const [timeLimit, setTimeLimit] = useState("");
   const [roles, setRoles] = useState([]);
@@ -73,7 +292,9 @@ function AddStep({ isOpen, onClose, onAddStep }) {
 
     const fetchDepartments = async () => {
       try {
-        const departmentsResponse = await departmentAPI.getDepartments(token);
+        const departmentsResponse = await departmentAPI.getDepartments(token, {
+          per_page: 600,
+        });
         if (departmentsResponse.status && departmentsResponse.data) {
           setDepartments(departmentsResponse.data.data);
         }
@@ -94,6 +315,16 @@ function AddStep({ isOpen, onClose, onAddStep }) {
       fetchRolesAndDepartments();
     }
   }, [isOpen, fetchRolesAndDepartments]);
+
+  useLayoutEffect(() => {
+    if (rolesDropdownOpen && rolesContainerRef.current) {
+      const rect = rolesContainerRef.current.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      const spaceBelow = viewportH - rect.bottom;
+      const DROPDOWN_ESTIMATE = 240;
+      setRolesDropUp(spaceBelow < DROPDOWN_ESTIMATE);
+    }
+  }, [rolesDropdownOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -201,7 +432,7 @@ function AddStep({ isOpen, onClose, onAddStep }) {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative">
+                <div className="relative" ref={rolesContainerRef}>
                   <label className="block text-sm font-medium text-gray-900 mb-1">
                     Assigned Roles
                   </label>
@@ -219,7 +450,13 @@ function AddStep({ isOpen, onClose, onAddStep }) {
                     ) : rolesError ? (
                       <span className="text-red-600">Failed to load roles</span>
                     ) : (
-                      <span className={assignedRoles.length ? "text-gray-900" : "text-gray-400"}>
+                      <span
+                        className={
+                          assignedRoles.length
+                            ? "text-gray-900"
+                            : "text-gray-400"
+                        }
+                      >
                         {assignedRoles.length > 0
                           ? `${assignedRoles.length} selected`
                           : "Select one or more roles"}
@@ -257,11 +494,15 @@ function AddStep({ isOpen, onClose, onAddStep }) {
                         className="fixed inset-0 z-10"
                         onClick={() => setRolesDropdownOpen(false)}
                       ></div>
-                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto py-1">
+                      <div className={`absolute z-20 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto py-1 ${
+                        rolesDropUp ? "bottom-full mb-1" : "top-full mt-1"
+                      }`}>
                         {rolesLoading ? (
                           <div className="flex items-center justify-center py-6 space-y-2 flex-col">
                             <span className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></span>
-                            <p className="text-sm text-gray-600">Loading roles...</p>
+                            <p className="text-sm text-gray-600">
+                              Loading roles...
+                            </p>
                           </div>
                         ) : rolesError ? (
                           <div className="flex flex-col items-center justify-center py-6 space-y-3">
@@ -307,38 +548,16 @@ function AddStep({ isOpen, onClose, onAddStep }) {
                   <label className="block text-sm font-medium text-gray-900 mb-1">
                     Required Department (optional)
                   </label>
-                  {departmentsLoading ? (
-                    <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-400">
-                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></span>
-                      Loading departments...
-                    </div>
-                  ) : departmentsError ? (
-                    <div className="flex flex-col gap-2">
-                      <span className="px-3 py-2 border border-red-300 rounded-md text-sm text-red-600">
-                        Failed to load departments
-                      </span>
-                      <button
-                        type="button"
-                        onClick={fetchRolesAndDepartments}
-                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  ) : (
-                    <select
-                      value={requiredDepartmentId}
-                      onChange={(e) => setRequiredDepartmentId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
-                    >
-                      <option value="">No department restriction</option>
-                      {departments.map((dept) => (
-                        <option key={dept.id} value={dept.id}>
-                          {dept.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  <SearchableDepartmentDropdown
+                    value={requiredDepartmentId}
+                    onChange={(id) => setRequiredDepartmentId(id)}
+                    token={token}
+                    departments={departments}
+                    onDepartmentsChange={setDepartments}
+                    loading={departmentsLoading}
+                    error={departmentsError}
+                    onRetry={fetchRolesAndDepartments}
+                  />
                 </div>
 
                 <div className="sm:col-span-2">

@@ -97,10 +97,8 @@ export default function RecordMemoDetails() {
     setIsProcessingAction(true)
     try {
       await axios.put(
-        `https://memo.smt.tfnsolutions.us/api/v1/external-memos/${id}/status`,
-        {
-          status: 'completed'
-        },
+        `https://memo.smt.tfnsolutions.us/api/v1/external-memos/${id}/acknowledge`,
+        {},
         {
           headers: {
             'Content-Type': 'application/json',
@@ -194,13 +192,15 @@ export default function RecordMemoDetails() {
           <p className="text-sm text-gray-600 mt-1">Tracking ID: {memo.tracking_id}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowShareModal(true)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
-          >
-            <FiShare2 className="w-4 h-4" />
-            Share
-          </button>
+          {memo.status?.toLowerCase() !== 'completed' && (
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
+            >
+              <FiShare2 className="w-4 h-4" />
+              Share
+            </button>
+          )}
           {memo.status?.toLowerCase() !== 'completed' && (
             <button
               onClick={() => setShowAcknowledgeModal(true)}
@@ -210,13 +210,15 @@ export default function RecordMemoDetails() {
               Acknowledge
             </button>
           )}
-          <button
-            onClick={() => setShowForwardModal(true)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
-          >
-            <FiArrowUpRight className="w-4 h-4" />
-            Forward
-          </button>
+          {memo.status?.toLowerCase() !== 'completed' && (
+            <button
+              onClick={() => setShowForwardModal(true)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
+            >
+              <FiArrowUpRight className="w-4 h-4" />
+              Forward
+            </button>
+          )}
         </div>
       </div>
 

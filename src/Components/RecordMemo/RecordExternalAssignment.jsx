@@ -23,6 +23,8 @@ const mergeDepartments = (base, extra) => {
   return Array.from(map.values());
 };
 
+const NO_DEPARTMENT_OPTION = { id: "none", name: "No department" };
+
 function SearchableDepartmentDropdown({
   value,
   onChange,
@@ -41,7 +43,9 @@ function SearchableDepartmentDropdown({
   const containerRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  const selectedDept = departments.find((d) => String(d.id) === String(value));
+  const selectedDept =
+    departments.find((d) => String(d.id) === String(value)) ||
+    (String(value) === "none" ? NO_DEPARTMENT_OPTION : null);
 
   useEffect(() => {
     setOptions((prev) => mergeDepartments(prev, departments));
@@ -100,7 +104,7 @@ function SearchableDepartmentDropdown({
 
   const handleSelect = (dept) => {
     onChange(dept.id);
-    if (onDepartmentsChange) {
+    if (onDepartmentsChange && dept.id !== "none") {
       onDepartmentsChange((prev) => mergeDepartments(prev, [dept]));
     }
     setOpen(false);
@@ -171,6 +175,19 @@ function SearchableDepartmentDropdown({
             />
           </div>
           <ul className="max-h-48 overflow-y-auto py-1">
+            <li key="none">
+              <button
+                type="button"
+                onClick={() => handleSelect(NO_DEPARTMENT_OPTION)}
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 ${
+                  String(value) === "none"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700"
+                }`}
+              >
+                {NO_DEPARTMENT_OPTION.name}
+              </button>
+            </li>
             {searching ? (
               <li className="px-3 py-2 text-sm text-gray-500">Searching...</li>
             ) : options.length === 0 ? (
@@ -244,14 +261,8 @@ export default function RecordExternalAssignment() {
 
   useEffect(() => {
     if (!token || !departmentId) {
-      setOfficers([
-        {
-          id: "none",
-          first_name: "No",
-          last_name: "Department",
-          role: { name: "User" },
-        },
-      ]);
+      setOfficers([]);
+      setOfficerId("");
       setLoadingOfficers(false);
       return;
     }
@@ -264,7 +275,6 @@ export default function RecordExternalAssignment() {
       try {
         const userRes = await userAPI.getDepartmentUsers(departmentId, token);
         if (userRes.status && userRes.data) {
-          console.log("Fetched officers:", userRes.data);
           setOfficers(userRes.data || []);
         }
       } catch (error) {
@@ -296,7 +306,12 @@ export default function RecordExternalAssignment() {
         ...previousData,
         departmentId,
         officerId,
-        department: selectedDept ? selectedDept.name : "",
+        department:
+          departmentId === "none"
+            ? "No department"
+            : selectedDept
+              ? selectedDept.name
+              : "",
         officer: selectedOfficer
           ? `${selectedOfficer.first_name} ${selectedOfficer.last_name}`
           : "",

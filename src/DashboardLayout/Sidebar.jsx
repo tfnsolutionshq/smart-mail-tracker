@@ -69,7 +69,7 @@ export default function Sidebar({ isOpen, onToggle }) {
     },
     {
       id: "recordmemo",
-      label: "Record Memo",
+      label: "External Memos",
       icon: FiFileText,
       path: "/record-memo",
     },
