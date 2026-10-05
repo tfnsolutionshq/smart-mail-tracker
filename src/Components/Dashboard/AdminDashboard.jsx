@@ -197,7 +197,9 @@ export default function AdminDashboard() {
       <div className="mt-6 bg-white rounded-lg border border-gray-200 p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Pending Approvals</h2>
-          <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">{pendingApprovals.length} pending</span>
+          <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+            {loading ? '...' : `${pendingApprovals.length} pending`}
+          </span>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -211,7 +213,16 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {pendingApprovals.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <span className="inline-flex items-center gap-2">
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900" />
+                      Loading pending approvals...
+                    </span>
+                  </td>
+                </tr>
+              ) : pendingApprovals.length > 0 ? (
                 pendingApprovals.map((memo) => (
                   <tr 
                     key={memo.id} 

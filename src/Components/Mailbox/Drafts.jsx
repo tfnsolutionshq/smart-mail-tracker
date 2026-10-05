@@ -99,7 +99,7 @@ function Drafts() {
   }
   
   return (
-    <div className="flex-1 flex flex-col" onClick={() => setShowActions(null)}>
+    <div className="flex-1 flex flex-col min-h-0" onClick={() => setShowActions(null)}>
       <div className="border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-lg md:text-xl font-bold">Drafts</h1>

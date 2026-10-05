@@ -38,6 +38,8 @@ function MailContent() {
   const [comment, setComment] = useState('')
   const [approvalNote, setApprovalNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [approving, setApproving] = useState(false)
+  const [rejecting, setRejecting] = useState(false)
   const [pinning, setPinning] = useState(false)
   const [starring, setStarring] = useState(false)
   const [archiving, setArchiving] = useState(false)
@@ -127,7 +129,9 @@ function MailContent() {
   }
 
   const handleApproval = async (status) => {
-    setSubmitting(true)
+    const isApprove = status === 'approved'
+    const setBusy = isApprove ? setApproving : setRejecting
+    setBusy(true)
     try {
       const apiClient = axios.create({
         baseURL: 'https://memo.smt.tfnsolutions.us/api/v1',
@@ -148,7 +152,7 @@ function MailContent() {
       console.error('Error processing approval:', error)
       showNotification(`Failed to ${status} memo`, 'error')
     } finally {
-      setSubmitting(false)
+      setBusy(false)
     }
   }
   
@@ -870,17 +874,17 @@ function MailContent() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleApproval('approved')}
-                      disabled={submitting}
+                      disabled={approving}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
                     >
-                      {submitting ? 'Processing...' : 'Approve'}
+                      {approving ? 'Processing...' : 'Approve'}
                     </button>
                     <button
                       onClick={() => handleApproval('rejected')}
-                      disabled={submitting}
+                      disabled={rejecting}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 disabled:opacity-50"
                     >
-                      {submitting ? 'Processing...' : 'Reject'}
+                      {rejecting ? 'Processing...' : 'Reject'}
                     </button>
                   </div>
                 </div>

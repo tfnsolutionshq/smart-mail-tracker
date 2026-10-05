@@ -54,7 +54,7 @@ function MailboxLayout() {
   }, [])
   
   return (
-    <div className="h-screen flex bg-white relative">
+    <div className="h-full flex bg-white relative overflow-hidden">
       {/* Mobile overlay */}
       {!sidebarCollapsed && (
         <div 
@@ -64,7 +64,7 @@ function MailboxLayout() {
       )}
       
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'hidden md:flex' : 'fixed md:relative'} z-20 md:z-auto`}>
+      <div className={`${sidebarCollapsed ? 'hidden md:flex' : 'fixed md:relative top-0 left-0 md:top-auto md:left-auto'} z-20 md:z-auto h-full shrink-0`}>
         <MailboxSidebar 
           isCollapsed={sidebarCollapsed} 
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -76,9 +76,9 @@ function MailboxLayout() {
       </div>
       
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
         {/* Mobile header with menu button */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-white shrink-0">
           <button
             onClick={() => setSidebarCollapsed(false)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

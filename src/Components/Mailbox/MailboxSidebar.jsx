@@ -29,7 +29,7 @@ function MailboxSidebar({
   const [showFilters, setShowFilters] = useState(false)
   
   return (
-    <div className={`${isCollapsed ? 'w-16 md:w-16' : 'w-full md:w-60'} bg-gray-50 border-r border-gray-200 h-screen flex flex-col transition-all duration-300 ease-in-out`}>
+    <div className={`${isCollapsed ? 'w-16 md:w-16' : 'w-full md:w-60'} bg-gray-50 border-r border-gray-200 h-full flex flex-col transition-all duration-300 ease-in-out`}>
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <button

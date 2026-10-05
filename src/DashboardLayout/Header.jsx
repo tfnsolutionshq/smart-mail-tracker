@@ -64,7 +64,7 @@ export default function Header({ onMenuClick }) {
     try {
       await axios.post(`${identityBaseUrl}/logout`);
     } catch (error) {
-      console.log("Logout API error:", error);
+      console.error("Logout API error:", error);
     } finally {
       logout();
       showNotification("Logged out successfully", "success");

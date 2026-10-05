@@ -34,7 +34,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log("Login - Making API call to:", `${identityBaseUrl}/login`);
       const response = await axios.post(
         `${identityBaseUrl}/login`,
         {
@@ -49,19 +48,12 @@ export default function LoginPage() {
         },
       );
 
-      console.log("Login - API response:", response);
-
       if (response.data.status) {
-        console.log(
-          "Login - Calling login function with token:",
-          response.data.data.token,
-        );
         login(response.data.data.token, response.data.data.user);
         showNotification(response.data.message, "success");
         navigate("/dashboard");
       }
     } catch (error) {
-      console.error("Login - API error:", error);
       const message =
         error.response?.data?.message || "Login failed. Please try again.";
       showNotification(message, "error");
@@ -84,7 +76,11 @@ export default function LoginPage() {
         {/* Logo and Title */}
         <div className="text-center mb-6">
           <Link to="/">
-            <img src={logo} alt="SmartMailTrack" className="h-14 mx-auto mb-3" />
+            <img
+              src={logo}
+              alt="SmartMailTrack"
+              className="h-14 mx-auto mb-3"
+            />
           </Link>
           <p className="text-xs text-gray-300">
             Enterprise Memo Management Platform

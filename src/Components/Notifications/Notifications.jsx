@@ -22,6 +22,7 @@ export default function Notifications({ onClose, onUpdate }) {
   const [showSettings, setShowSettings] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [markingAllAsRead, setMarkingAllAsRead] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const isAdmin = role === "admin";
@@ -33,6 +34,7 @@ export default function Notifications({ onClose, onUpdate }) {
           userId: user?.id,
           hasToken: !!token,
         });
+        setLoading(false);
         return;
       }
 
@@ -93,7 +95,8 @@ export default function Notifications({ onClose, onUpdate }) {
   };
 
   const markAllAsRead = async () => {
-    if (!user?.id) return;
+    if (!user?.id || markingAllAsRead) return;
+    setMarkingAllAsRead(true);
     try {
       await axios.put(
         `https://notification.smt.tfnsolutions.us/api/v1/notifications/${user.id}/read-all`,
@@ -103,6 +106,8 @@ export default function Notifications({ onClose, onUpdate }) {
       onUpdate?.();
     } catch (error) {
       console.error("Failed to mark all as read:", error);
+    } finally {
+      setMarkingAllAsRead(false);
     }
   };
 
@@ -176,9 +181,10 @@ export default function Notifications({ onClose, onUpdate }) {
           <div className="flex items-center gap-2">
             <button
               onClick={markAllAsRead}
-              className="text-xs hover:text-gray-700 font-medium"
+              disabled={markingAllAsRead}
+              className="text-xs hover:text-gray-700 font-medium disabled:opacity-50 disabled:hover:text-gray-700"
             >
-              Mark all read
+              {markingAllAsRead ? "Marking as read..." : "Mark all as read"}
             </button>
             {/* {isAdmin && (
             <button 

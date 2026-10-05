@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   FiFileText,
   FiUsers,
@@ -23,6 +23,7 @@ import {
   FiAlignRight,
   FiType,
   FiGitBranch,
+  FiRefreshCw,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -52,7 +53,12 @@ export default function ComposeMemo() {
   const [workflows, setWorkflows] = useState([]);
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [loadingWorkflows, setLoadingWorkflows] = useState(false);
+  const [workflowsError, setWorkflowsError] = useState(null);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoriesError, setCategoriesError] = useState(null);
 
   // Recipient management
   const [activeTab, setActiveTab] = useState("to");
@@ -71,9 +77,54 @@ export default function ComposeMemo() {
   const [aiContext, setAIContext] = useState("");
   const [attachments, setAttachments] = useState([]);
 
+  const fetchWorkflows = useCallback(async () => {
+    setLoadingWorkflows(true);
+    setWorkflowsError(null);
+
+    try {
+      const response = await workflowAPI.getActiveWorkflows(token);
+      if (!response?.status) {
+        throw new Error("Unexpected response format from the server.");
+      }
+      setWorkflows(response.data || []);
+    } catch (error) {
+      console.error("Error fetching workflows:", error);
+      setWorkflowsError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load workflow templates. Please try again.",
+      );
+    } finally {
+      setLoadingWorkflows(false);
+    }
+  }, [token]);
+
+  const fetchCategories = useCallback(async () => {
+    setLoadingCategories(true);
+    setCategoriesError(null);
+
+    try {
+      const response = await categoryAPI.getCategories(token);
+      if (!response?.status) {
+        throw new Error("Unexpected response format from the server.");
+      }
+      setCategories(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategoriesError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load categories. Please try again.",
+      );
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (token) {
-      fetchData();
+      fetchWorkflows();
+      fetchCategories();
     }
 
     const templateId = searchParams.get("template");
@@ -81,22 +132,7 @@ export default function ComposeMemo() {
       setSelectedTemplate(templateId);
       setWorkflowMode("template");
     }
-  }, [token, searchParams]);
-
-  const fetchData = async () => {
-    try {
-      const [workflowResponse, categoryResponse] = await Promise.all([
-        workflowAPI.getActiveWorkflows(token),
-        categoryAPI.getCategories(token),
-      ]);
-
-      if (workflowResponse.status) setWorkflows(workflowResponse.data);
-      if (categoryResponse.status) setCategories(categoryResponse.data.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      showNotification("Failed to load data", "error");
-    }
-  };
+  }, [token, searchParams, fetchWorkflows, fetchCategories]);
 
   const addRecipient = (user, type) => {
     const newRecipient = {
@@ -149,6 +185,8 @@ export default function ComposeMemo() {
   }, [recipientSearch, token]);
 
   const handleSendMemo = async (isDraft = false) => {
+    if (isDraft ? savingDraft : sending) return;
+
     if (!isDraft && (!subject.trim() || !content.trim())) {
       showNotification("Please fill in all required fields", "error");
       return;
@@ -173,7 +211,8 @@ export default function ComposeMemo() {
       }
     }
 
-    setLoading(true);
+    const setBusy = isDraft ? setSavingDraft : setSending;
+    setBusy(true);
     try {
       const formData = new FormData();
       formData.append("subject", subject);
@@ -276,7 +315,7 @@ export default function ComposeMemo() {
       }
       showNotification(details ? `${msg} — ${details}` : msg, "error");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
@@ -367,11 +406,15 @@ export default function ComposeMemo() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleSendMemo(true)}
-              disabled={loading}
+              disabled={savingDraft}
               className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              <FiSave className="w-4 h-4" />
-              Save Draft
+              {savingDraft ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700"></div>
+              ) : (
+                <FiSave className="w-4 h-4" />
+              )}
+              {savingDraft ? "Saving..." : "Save Draft"}
             </button>
           </div>
         </div>
@@ -452,21 +495,50 @@ export default function ComposeMemo() {
               <div className="mt-4 animate-fadeIn">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Workflow Template
+                  {loadingWorkflows && (
+                    <span className="ml-2 text-xs font-normal text-gray-500">
+                      Loading...
+                    </span>
+                  )}
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-600 disabled:opacity-50"
+                  disabled={loadingWorkflows || !!workflowsError}
                   value={
                     selectedTemplate === "no-workflow" ? "" : selectedTemplate
                   }
                   onChange={(e) => setSelectedTemplate(e.target.value)}
                 >
-                  <option value="">Choose a workflow template...</option>
+                  <option value="">
+                    {loadingWorkflows
+                      ? "Loading workflow templates..."
+                      : workflowsError
+                        ? "Failed to load workflow templates"
+                        : "Choose a workflow template..."}
+                  </option>
                   {workflows.map((workflow) => (
                     <option key={workflow.id} value={workflow.id}>
                       {workflow.name} - {workflow.category_name}
                     </option>
                   ))}
                 </select>
+
+                {workflowsError && (
+                  <div className="mt-2 flex items-center justify-between gap-3 border border-red-200 bg-red-50 rounded-lg px-3 py-2">
+                    <p className="text-xs text-red-600">{workflowsError}</p>
+                    <button
+                      type="button"
+                      onClick={() => fetchWorkflows()}
+                      disabled={loadingWorkflows}
+                      className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    >
+                      <FiRefreshCw
+                        className={`w-3.5 h-3.5 ${loadingWorkflows ? "animate-spin" : ""}`}
+                      />
+                      Retry
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -481,20 +553,49 @@ export default function ComposeMemo() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
+                  {loadingCategories && (
+                    <span className="ml-2 text-xs font-normal text-gray-500">
+                      Loading...
+                    </span>
+                  )}
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50"
+                  disabled={loadingCategories || !!categoriesError}
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   required
                 >
-                  <option value="">Select category</option>
+                  <option value="">
+                    {loadingCategories
+                      ? "Loading categories..."
+                      : categoriesError
+                        ? "Failed to load categories"
+                        : "Select category"}
+                  </option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={String(cat.id)}>
                       {cat.name}
                     </option>
                   ))}
                 </select>
+
+                {categoriesError && (
+                  <div className="mt-2 flex items-center justify-between gap-3 border border-red-200 bg-red-50 rounded-lg px-3 py-2">
+                    <p className="text-xs text-red-600">{categoriesError}</p>
+                    <button
+                      type="button"
+                      onClick={() => fetchCategories()}
+                      disabled={loadingCategories}
+                      className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    >
+                      <FiRefreshCw
+                        className={`w-3.5 h-3.5 ${loadingCategories ? "animate-spin" : ""}`}
+                      />
+                      Retry
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1070,15 +1171,15 @@ export default function ComposeMemo() {
             <div className="space-y-3">
               <button
                 onClick={() => handleSendMemo(false)}
-                disabled={loading}
+                disabled={sending}
                 className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
               >
-                {loading ? (
+                {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 ) : (
                   <FiSend className="w-4 h-4" />
                 )}
-                {loading ? "Sending..." : "Send"}
+                {sending ? "Sending..." : "Send"}
               </button>
 
               <button
@@ -1090,8 +1191,7 @@ export default function ComposeMemo() {
                     setIsScheduled(true);
                   }
                 }}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
               >
                 {isScheduled ? (
                   <FiX className="w-4 h-4" />
