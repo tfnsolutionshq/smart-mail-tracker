@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
 import { memoAPI, identityBaseUrl, identityStorageBase, parseMailboxEnvelope } from '../../services/api'
+import MailboxLoadError from './MailboxLoadError'
 
 function Archived() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ function Archived() {
   const [showActions, setShowActions] = useState(null)
   const [emails, setEmails] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(null)
   const [usersMap, setUsersMap] = useState({})
 
   const fetchUsers = async () => {
@@ -36,15 +38,19 @@ function Archived() {
     if (!token) return
     
     setLoading(true)
+    setLoadError(null)
     try {
       const response = await memoAPI.getArchived(token)
       if (response.status && response.data != null) {
         const { memos: list } = parseMailboxEnvelope(response.data)
         setEmails(list)
+      } else {
+        throw new Error('Unexpected response format from the server.')
       }
     } catch (error) {
       console.error('Error fetching archived memos:', error)
       showNotification('Failed to fetch archived memos', 'error')
+      setLoadError('Failed to load your archived memos. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -114,6 +120,8 @@ function Archived() {
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
+        ) : loadError ? (
+          <MailboxLoadError message={loadError} onRetry={fetchArchived} retrying={loading} />
         ) : emails.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-gray-500">
             <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
 import { memoAPI, identityBaseUrl, memoBaseUrl, identityStorageBase, parseMailboxEnvelope } from '../../services/api'
+import MailboxLoadError from './MailboxLoadError'
 
 function Starred() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ function Starred() {
   const [showActions, setShowActions] = useState(null)
   const [emails, setEmails] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(null)
   const [starringMemo, setStarringMemo] = useState(null)
   const [archivingMemo, setArchivingMemo] = useState(null)
   const [deletingMemo, setDeletingMemo] = useState(null)
@@ -39,6 +41,7 @@ function Starred() {
     if (!token) return
 
     setLoading(true)
+    setLoadError(null)
     try {
       const apiClient = axios.create({
         baseURL: memoBaseUrl,
@@ -52,10 +55,13 @@ function Starred() {
       if (response.data.status && response.data.data) {
         const { memos: list } = parseMailboxEnvelope(response.data.data)
         setEmails(list)
+      } else {
+        throw new Error('Unexpected response format from the server.')
       }
     } catch (error) {
       console.error('Error fetching starred memos:', error)
       showNotification('Failed to fetch starred memos', 'error')
+      setLoadError('Failed to load your starred memos. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -161,6 +167,8 @@ function Starred() {
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
+        ) : loadError ? (
+          <MailboxLoadError message={loadError} onRetry={fetchStarredMemos} retrying={loading} />
         ) : emails.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-gray-500">
             <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,13 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
+import axios from "axios";
+import { identityBaseUrl } from "../services/api";
 
 const AuthContext = createContext();
 
@@ -33,6 +42,33 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      localStorage.setItem("user", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    if (!token || !user?.id) return null;
+    try {
+      const response = await axios.get(`${identityBaseUrl}/users/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const fresh = response?.data?.data;
+      if (!fresh) throw new Error("Unexpected response format from the server.");
+      updateUser({
+        must_change_password: fresh.must_change_password ?? 0,
+      });
+      return fresh;
+    } catch (error) {
+      console.error("Error refreshing user:", error);
+      return null;
+    }
+  }, [token, user?.id, updateUser]);
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -40,15 +76,20 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
   };
 
-  const value = {
-    user,
-    token,
-    role: user?.role,
-    login,
-    logout,
-    loading,
-    isAuthenticated: !!token,
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      role: user?.role,
+      login,
+      logout,
+      updateUser,
+      refreshUser,
+      loading,
+      isAuthenticated: !!token,
+    }),
+    [user, token, loading, updateUser, refreshUser],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

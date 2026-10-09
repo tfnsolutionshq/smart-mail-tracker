@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { FiX, FiSend, FiBold, FiItalic, FiUnderline } from 'react-icons/fi'
+import { FiX, FiSend, FiBold, FiItalic, FiUnderline, FiPaperclip } from 'react-icons/fi'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import { useNotification } from '../../context/NotificationContext'
-import { userAPI, memoAPI } from '../../services/api'
+import { userAPI, memoAPI, memoBaseUrl } from '../../services/api'
 
 function EditDraftModal({ mail, onClose, onSuccess }) {
   const { token } = useAuth()
@@ -11,16 +11,19 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
   const [subject, setSubject] = useState(mail?.subject || '')
   const [body, setBody] = useState(mail?.body || '')
   const [priority, setPriority] = useState(mail?.priority || 'Normal')
-  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [sending, setSending] = useState(false)
   const [users, setUsers] = useState([])
   const [recipientSearch, setRecipientSearch] = useState('')
   const [selectedRecipients, setSelectedRecipients] = useState([])
   const [attachments, setAttachments] = useState([])
+  const [existingAttachments, setExistingAttachments] = useState([])
 
   useEffect(() => {
     if (token) {
       fetchUsers()
     }
+    setExistingAttachments(Array.isArray(mail?.attachments) ? [...mail.attachments] : [])
     if (mail?.recipients) {
       setSelectedRecipients(mail.recipients.map(r => ({
         recipient_id: r.recipient_id || r.id,
@@ -63,6 +66,30 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
     setSelectedRecipients(prev => prev.filter((_, i) => i !== index))
   }
 
+  const removeExistingAttachment = (id) => {
+    setExistingAttachments(prev => prev.filter(a => a.id !== id))
+  }
+
+  const resolveAttachmentUrl = (url) => {
+    if (!url) return null
+    return /^https?:\/\//i.test(url) ? url : `${memoBaseUrl}/${String(url).replace(/^\//, '')}`
+  }
+
+  const fetchExistingAsFile = async (att) => {
+    const url = resolveAttachmentUrl(att?.url)
+    if (!url) throw new Error(`Attachment "${att?.filename || 'unknown'}" has no download URL`)
+
+    const resp = await axios.get(url, { responseType: 'blob' })
+    const filename = att.filename || 'attachment'
+    const type = att.mime_type || resp.data.type || 'application/octet-stream'
+    return new File([resp.data], filename, { type })
+  }
+
+  const buildAttachmentsPayload = async () => {
+    const existingFiles = await Promise.all(existingAttachments.map(fetchExistingAsFile))
+    return [...existingFiles, ...attachments]
+  }
+
   const handleSaveDraft = async () => {
     if (!subject.trim()) {
       showNotification('Please enter a subject', 'error')
@@ -77,8 +104,9 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
       return
     }
 
-    setLoading(true)
+    setSaving(true)
     try {
+      const attachmentFiles = await buildAttachmentsPayload()
       await memoAPI.updateMemo(mail.id, {
         subject,
         body,
@@ -92,7 +120,7 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
           recipient_type: r.recipient_type,
           recipient_role: r.recipient_role
         })),
-        attachments
+        attachments: attachmentFiles
       }, token)
 
       showNotification('Draft saved successfully!', 'success')
@@ -102,7 +130,7 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
       console.error('Error saving draft:', error)
       showNotification('Failed to save draft', 'error')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
@@ -120,8 +148,9 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
       return
     }
 
-    setLoading(true)
+    setSending(true)
     try {
+      const attachmentFiles = await buildAttachmentsPayload()
       await memoAPI.updateMemo(mail.id, {
         subject,
         body,
@@ -135,7 +164,7 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
           recipient_type: r.recipient_type,
           recipient_role: r.recipient_role
         })),
-        attachments
+        attachments: attachmentFiles
       }, token)
 
       showNotification('Memo sent successfully!', 'success')
@@ -145,7 +174,7 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
       console.error('Error sending memo:', error)
       showNotification('Failed to send memo', 'error')
     } finally {
-      setLoading(false)
+      setSending(false)
     }
   }
 
@@ -273,6 +302,28 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
 
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Attachments</label>
+            {existingAttachments.length > 0 && (
+              <div className="mb-2 space-y-1">
+                {existingAttachments.map((att) => (
+                  <div key={att.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FiPaperclip className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                      <div className="text-xs text-gray-700 truncate max-w-[70%]">{att.filename}</div>
+                      <span className="text-[10px] text-gray-500 shrink-0">
+                        {att.size ? `${(att.size / 1024).toFixed(2)} KB` : ''}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeExistingAttachment(att.id)}
+                      className="text-red-600 hover:text-red-800 text-xs shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               className="border-2 border-dashed border-gray-300 rounded p-3 text-center"
               onDragOver={(e) => { e.preventDefault() }}
@@ -329,22 +380,22 @@ function EditDraftModal({ mail, onClose, onSuccess }) {
           </button>
           <button
             onClick={handleSaveDraft}
-            disabled={loading}
+            disabled={saving}
             className="px-3 py-1.5 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
           >
-            {loading ? 'Saving...' : 'Save Draft'}
+            {saving ? 'Saving...' : 'Save Draft'}
           </button>
           <button
             onClick={handleSend}
-            disabled={loading}
+            disabled={sending}
             className="px-3 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
           >
-            {loading ? (
+            {sending ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <FiSend className="w-4 h-4" />
             )}
-            {loading ? 'Sending...' : 'Send'}
+            {sending ? 'Sending...' : 'Send'}
           </button>
         </div>
       </div>

@@ -434,9 +434,9 @@ export const memoAPI = {
           }
         });
       }
-      if (hasAttachments) {
+      if (Array.isArray(memoData.attachments)) {
         memoData.attachments.forEach((file) => {
-          if (file) fd.append("attachments[]", file);
+          if (file) fd.append("attachments[]", file, file.name);
         });
       }
       const response = await apiClient.post(`/memos/${memoId}/update`, fd, {

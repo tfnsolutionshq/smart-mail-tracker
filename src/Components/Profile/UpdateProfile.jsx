@@ -8,7 +8,7 @@ import { FiCamera, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 
 function UpdateProfile() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const { token, user } = useAuth()
+  const { token, user, refreshUser, updateUser } = useAuth()
   const { showNotification } = useNotification()
   const [userData, setUserData] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
@@ -137,6 +137,8 @@ function UpdateProfile() {
         }
       )
       showNotification('Password updated successfully', 'success')
+      await refreshUser()
+      updateUser({ must_change_password: 0 })
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')

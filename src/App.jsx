@@ -76,6 +76,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/compose-memo" element={<ComposeMemoPage />} />
               <Route path="/mailbox" element={<Mailbox />} />
+              <Route path="/mailbox/:view" element={<Mailbox />} />
               <Route path="/mail-content/:id" element={<MailContent />} />
               <Route path="/record-memo" element={<RecordMemoPage />} />
               <Route

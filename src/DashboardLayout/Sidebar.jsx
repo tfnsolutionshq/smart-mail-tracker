@@ -30,7 +30,7 @@ export default function Sidebar({ isOpen, onToggle }) {
     if (path === "/track-memo") return "trackmemo";
     if (path === "/manage-dept") return "managedept";
     if (path === "/view-department") return "viewdept";
-    if (path === "/mailbox") return "mailbox";
+    if (path === "/mailbox" || path.startsWith("/mailbox/")) return "mailbox";
     if (path === "/workflows") return "workflows";
     if (path === "/reports") return "reports";
     // if (path.startsWith('/users')) return 'users'

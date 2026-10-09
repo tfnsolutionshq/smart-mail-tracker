@@ -39,13 +39,10 @@ export default function Notifications({ onClose, onUpdate }) {
       }
 
       try {
-        console.log("Fetching notifications for user:", user.id);
         const response = await axios.get(
           `https://notification.smt.tfnsolutions.us/api/v1/notifications/${user.id}?limit=10`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
-
-        console.log("Notifications response:", response.data);
 
         if (response.data.success) {
           setNotifications(response.data.data);
@@ -68,13 +65,8 @@ export default function Notifications({ onClose, onUpdate }) {
         navigate(`/record-memo-details/${notification.data.memo_id}`);
         onClose();
       }
-      if (
-        notification.type === "workflow_completed" ||
-        notification.type === "memo_received"
-      ) {
-        navigate(`/mail-content/${notification.data.memo_id}`);
-        onClose();
-      }
+      navigate(`/mail-content/${notification.data.memo_id}`);
+      onClose();
     }
   };
 
