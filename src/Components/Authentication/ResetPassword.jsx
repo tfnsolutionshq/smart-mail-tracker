@@ -44,7 +44,7 @@ function ResetPassword() {
 
     try {
       const response = await fetch(
-        "https://identity.smt.tfnsolutions.us/api/v1/verify-otp",
+        "https://identity.smt.tfnsolutions.us/api/v1/reset-password-otp",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
