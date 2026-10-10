@@ -26,7 +26,13 @@ export default function Sidebar({ isOpen, onToggle }) {
     const path = location.pathname;
     if (path === "/dashboard") return "dashboard";
     if (path === "/compose-memo") return "compose";
-    if (path === "/record-memo") return "recordmemo";
+    if (
+      path === "/record-memo" ||
+      path.startsWith("/view-external-memo") ||
+      path.startsWith("/record-external") ||
+      path.startsWith("/record-memo-")
+    )
+      return "recordmemo";
     if (path === "/track-memo") return "trackmemo";
     if (path === "/manage-dept") return "managedept";
     if (path === "/view-department") return "viewdept";
