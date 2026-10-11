@@ -3,6 +3,9 @@ import { FiX, FiChevronDown, FiSearch, FiRefreshCw } from 'react-icons/fi'
 import { departmentAPI, userAPI } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 
+const NO_DEPARTMENT_ID = "no-department";
+const NO_DEPARTMENT = { id: NO_DEPARTMENT_ID, name: "No Department" };
+
 const mergeDepartments = (base, extra) => {
   const map = new Map()
   ;[...(base || []), ...(extra || [])].forEach((d) => {
@@ -32,6 +35,7 @@ function DepartmentLiveSearch({
 
   const selectedDept = useMemo(() => {
     if (!value) return null
+    if (String(value) === NO_DEPARTMENT_ID) return NO_DEPARTMENT
     return mergeDepartments(departments, options).find(
       (d) => String(d.id) === String(value),
     ) || null
@@ -129,7 +133,7 @@ function DepartmentLiveSearch({
 
   const handleSelect = (dept) => {
     onChange(String(dept.id))
-    if (onDepartmentsMerge) onDepartmentsMerge((prev) => mergeDepartments(prev, [dept]))
+    if (String(dept.id) !== NO_DEPARTMENT_ID && onDepartmentsMerge) onDepartmentsMerge((prev) => mergeDepartments(prev, [dept]))
     setOpen(false)
     setQuery('')
   }
@@ -187,6 +191,20 @@ function DepartmentLiveSearch({
             {searching && <FiRefreshCw className="w-4 h-4 text-gray-400 animate-spin flex-shrink-0" />}
           </div>
           <ul className="max-h-48 overflow-y-auto py-1">
+            {(!query.trim() || "no department".includes(query.trim().toLowerCase())) && (
+              <li key={NO_DEPARTMENT_ID}>
+                <button
+                  type="button"
+                  title="No Department"
+                  onClick={() => handleSelect(NO_DEPARTMENT)}
+                  className={`w-full text-left px-3 py-2 text-sm truncate hover:bg-blue-50 ${
+                    String(value) === NO_DEPARTMENT_ID ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                  }`}
+                >
+                  No Department
+                </button>
+              </li>
+            )}
             {searching && options.length === 0 ? (
               <li className="px-3 py-2 text-sm text-gray-500">Searching...</li>
             ) : options.length === 0 ? (
@@ -293,6 +311,7 @@ export default function ForwardMemo({
   }, [token])
 
   // Fetch officers whenever the selected department changes
+  // "No Department" loads users from /users/departments/none
   useEffect(() => {
     if (!isOpen) return
     setOfficerId('')
@@ -302,8 +321,14 @@ export default function ForwardMemo({
       setOfficersLoading(false)
       return
     }
+    if (String(departmentId) === NO_DEPARTMENT_ID) {
+      fetchOfficers("none")
+      return
+    }
     fetchOfficers(departmentId)
   }, [departmentId, isOpen, fetchOfficers])
+
+  const isNoDepartment = String(departmentId) === NO_DEPARTMENT_ID
 
   const handleDepartmentChange = (id) => {
     setDepartmentId(id)
@@ -314,8 +339,8 @@ export default function ForwardMemo({
     const selectedOfficer = officers.find(o => String(o.id) === String(officerId))
 
     onConfirm({
-      departmentId,
-      officerId,
+      departmentId: isNoDepartment ? null : departmentId,
+      officerId: officerId || null,
       email: selectedOfficer ? selectedOfficer.email : '',
       remarks
     })
@@ -396,7 +421,7 @@ export default function ForwardMemo({
                   <span className="flex-1 min-w-0 truncate">{officersError}</span>
                   <button
                     type="button"
-                    onClick={() => fetchOfficers(departmentId)}
+                    onClick={() => fetchOfficers(isNoDepartment ? "none" : departmentId)}
                     className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
                   >
                     Retry
@@ -439,7 +464,7 @@ export default function ForwardMemo({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              Forward
+              {isProcessing ? 'Forwarding...' : 'Forward'}
             </button>
           </div>
         </div>

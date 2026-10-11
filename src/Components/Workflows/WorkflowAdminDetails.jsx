@@ -61,7 +61,7 @@ function WorkflowAdminDetails() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     )

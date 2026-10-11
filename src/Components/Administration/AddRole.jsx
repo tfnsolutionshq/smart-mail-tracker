@@ -73,6 +73,7 @@ function AddRole({ onClose, onSuccess }) {
       if (response.data.status) {
         setCreatedRole(response.data.data);
         showNotification("Role created successfully", "success");
+        onSuccess && onSuccess();
         setStep(2);
       }
     } catch (error) {

@@ -45,6 +45,7 @@ export default function Notifications({ onClose, onUpdate }) {
         );
 
         if (response.data.success) {
+          console.log("Fetched notifications:", response.data.data);
           setNotifications(response.data.data);
           setUnreadCount(response.data.unread_count);
         }
@@ -62,11 +63,12 @@ export default function Notifications({ onClose, onUpdate }) {
     await markAsRead(notification.id);
     if (notification.data?.memo_id) {
       if (notification.type === "external_memo_assigned") {
-        navigate(`/record-memo-details/${notification.data.memo_id}`);
+        navigate(`/view-external-memo?id=${notification.data.memo_id}`);
+        onClose();
+      } else {
+        navigate(`/mail-content/${notification.data.memo_id}`);
         onClose();
       }
-      navigate(`/mail-content/${notification.data.memo_id}`);
-      onClose();
     }
   };
 

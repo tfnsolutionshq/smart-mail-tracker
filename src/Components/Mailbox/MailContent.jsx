@@ -299,7 +299,7 @@ function MailContent() {
   if (loading || !mail) {
     return (
       <DashboardLayout>
-        <div className="flex justify-center py-8">
+        <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       </DashboardLayout>

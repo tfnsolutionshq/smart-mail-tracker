@@ -198,9 +198,9 @@ const createMemoApiClient = (token) => {
 };
 
 export const categoryAPI = {
-  getCategories: async (token) => {
+  getCategories: async (token, params = {}) => {
     const apiClient = createMemoApiClient(token);
-    const response = await apiClient.get("/categories");
+    const response = await apiClient.get("/categories", { params });
     return response.data;
   },
 

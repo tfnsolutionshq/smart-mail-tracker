@@ -13,6 +13,128 @@ import {
 function TrackMemoDetails({ onBack, memoData }) {
   const [copied, setCopied] = useState(false);
 
+  const normalizeDepartment = (dept) => {
+    if (!dept) return "No department";
+    const trimmed = String(dept).trim();
+    if (trimmed === "Unknown" || trimmed.toLowerCase() === "office")
+      return "No department";
+    return dept;
+  };
+  const normalizeUser = (name) => (!name || name === "Unknown" ? null : name);
+  const formatTimelineDate = (ds) => {
+    if (!ds) return "—";
+    const d = new Date(ds);
+    if (isNaN(d)) return ds;
+    return d.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const buildTimelineEntry = (item, index, arr) => {
+    const action = item.action || "Update";
+    const lowered = String(action).toLowerCase();
+    const userName = normalizeUser(item.user_name);
+    const assignedBy = normalizeUser(item.assigned_by);
+    const assignedTo = normalizeUser(item.assigned_to);
+    const forwardedBy = normalizeUser(item.forwarded_by);
+    const forwardedTo = normalizeUser(item.forwarded_to);
+    const acknowledgedBy = normalizeUser(
+      item.acknowledged_by || item.completed_by,
+    );
+    const assignedByDept = normalizeDepartment(item.assigned_by_department);
+    const assignedToDept = normalizeDepartment(item.assigned_to_department);
+    const forwardedByDept = normalizeDepartment(item.forwarded_by_department);
+    const forwardedToDept = normalizeDepartment(item.forwarded_to_department);
+    const dept = normalizeDepartment(item.department);
+
+    let subtitle = null;
+    if (lowered === "assigned") {
+      subtitle = `${assignedByDept} → ${assignedToDept}`;
+    } else if (lowered === "forwarded") {
+      subtitle = `${forwardedByDept} → ${forwardedToDept}`;
+    } else if (lowered === "recorded" && item.department) {
+      subtitle = dept;
+    }
+
+    let description = action;
+    if (lowered === "recorded") {
+      description = userName
+        ? `Recorded by ${userName} in ${dept}`
+        : `Recorded in ${dept}`;
+    } else if (lowered === "assigned") {
+      description =
+        assignedBy && assignedTo
+          ? `Assigned by ${assignedBy} to ${assignedTo}`
+          : assignedBy
+            ? `Assigned by ${assignedBy}`
+            : assignedTo
+              ? `Assigned to ${assignedTo}`
+              : "Assigned";
+    } else if (lowered === "forwarded") {
+      description =
+        forwardedBy && forwardedTo
+          ? `Forwarded by ${forwardedBy} to ${forwardedTo}`
+          : forwardedBy
+            ? `Forwarded by ${forwardedBy}`
+            : forwardedTo
+              ? `Forwarded to ${forwardedTo}`
+              : "Forwarded";
+    } else {
+      const performer =
+        userName || acknowledgedBy || assignedTo || forwardedTo || null;
+      const who = performer ? `${action} by ${performer}` : action;
+      const parts = [who];
+      if (dept && dept !== "No department") parts.push(`Department: ${dept}`);
+      if (assignedBy || assignedTo)
+        parts.push(`Assigned: ${assignedBy || "—"} → ${assignedTo || "—"}`);
+      if (forwardedBy || forwardedTo)
+        parts.push(`Forwarded: ${forwardedBy || "—"} → ${forwardedTo || "—"}`);
+      description = parts.join(" • ");
+    }
+
+    return {
+      id: index + 1,
+      title: action,
+      subtitle,
+      date: formatTimelineDate(item.date_time),
+      description,
+      status: index === arr.length - 1 ? "current" : "completed",
+    };
+  };
+
+  const lastTimelineEntry =
+    memoData.movement_timeline?.[memoData.movement_timeline.length - 1];
+
+  const rawCurrentDepartment =
+    lastTimelineEntry?.assigned_to_department ||
+    lastTimelineEntry?.forwarded_to_department ||
+    lastTimelineEntry?.department ||
+    null;
+  const isOfficeDepartment =
+    typeof rawCurrentDepartment === "string" &&
+    rawCurrentDepartment.trim().toLowerCase() === "office";
+
+  const normOfficerValue = (val) => (!val || val === "Unknown" ? null : val);
+  const currentOfficerName =
+    normOfficerValue(memoData.assigned_to?.name) ||
+    normOfficerValue(lastTimelineEntry?.assigned_to) ||
+    normOfficerValue(lastTimelineEntry?.assigned_to_name) ||
+    normOfficerValue(memoData.assigned_officer?.name) ||
+    normOfficerValue(memoData.current_officer?.name) ||
+    null;
+  const currentOfficerEmail =
+    normOfficerValue(memoData.assigned_to?.email) ||
+    normOfficerValue(lastTimelineEntry?.assigned_to_email) ||
+    normOfficerValue(lastTimelineEntry?.assigned_email) ||
+    normOfficerValue(lastTimelineEntry?.officer_email) ||
+    normOfficerValue(memoData.assigned_officer?.email) ||
+    normOfficerValue(memoData.current_officer?.email) ||
+    null;
+
   // Transform API data to component format
   const data =
     // memoData
@@ -26,61 +148,68 @@ function TrackMemoDetails({ onBack, memoData }) {
       sender: memoData.sender_organization,
       senderContact: memoData.sender_contact,
       category: memoData.category_relation?.name || memoData.category,
-      dateReceived: new Date(memoData.date_received).toLocaleDateString(
-        "en-US",
-        {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        },
+      dateReceived: new Date(memoData.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      currentDepartment: normalizeDepartment(
+        lastTimelineEntry?.assigned_to_department ||
+          lastTimelineEntry?.forwarded_to_department ||
+          (lastTimelineEntry?.department !== "Unknown"
+            ? lastTimelineEntry?.department
+            : null),
       ),
-      currentDepartment:
-        memoData.movement_timeline?.[memoData.movement_timeline.length - 1]
-          ?.assigned_to_department ||
-        memoData.movement_timeline?.[memoData.movement_timeline.length - 1]
-          ?.forwarded_to_department ||
-        memoData.movement_timeline?.[memoData.movement_timeline.length - 1]
-          ?.department ||
-        "N/A",
       daysInSystem: Math.ceil(memoData.quick_info?.days_in_system || 0),
-      totalMovements: memoData.quick_info?.total_movements || 0,
+      totalMovements: memoData.movement_timeline?.length || 0,
       description: memoData.description,
       assignmentRemarks: memoData.assignment_remarks,
       timeline:
-        memoData.movement_timeline?.map((item, index) => ({
-          id: index + 1,
-          title: item.action,
-          subtitle:
-            item.action === "Assigned"
-              ? item.assigned_by_department !== "Unknown"
-                ? `${item.assigned_by_department} → ${item.assigned_to_department}`
-                : `No department → ${item.assigned_to_department}`
-              : item.action === "Forwarded"
-                ? `${item.forwarded_by_department} → ${item.forwarded_to_department}`
-                : null,
-          date: item.date_time,
-          description:
-            item.action === "Recorded"
-              ? item.department !== "Unknown"
-                ? `Recorded by ${item.user_name} in ${item.department}`
-                : `Recorded by ${item.user_name}`
-              : item.action === "Assigned"
-                ? `Assigned by ${item.assigned_by} to ${item.assigned_to} (Status: ${item.status})`
-                : item.action === "Forwarded"
-                  ? `Forwarded by ${item.forwarded_by} to ${item.forwarded_to}${item.remarks ? ` - ${item.remarks}` : ""}`
-                  : item.action,
-          status:
-            index === memoData.movement_timeline.length - 1
-              ? "current"
-              : "completed",
-        })) || [],
+        memoData.movement_timeline?.map((item, index, arr) =>
+          buildTimelineEntry(item, index, arr),
+        ) || [],
       attachments: memoData.attachments || [],
       activityLogs: memoData.activity_logs || [],
       assignments: memoData.assignments || [],
       forwards: memoData.forwards || [],
     };
+
+  const timeInSystemDisplay = (() => {
+    const created = memoData.created_at || memoData.date_received;
+    if (created) {
+      const diffMs = new Date() - new Date(created);
+      if (!isNaN(diffMs) && diffMs >= 0) {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"}`;
+        const days = Math.floor(hours / 24);
+        return `${days} ${days === 1 ? "day" : "days"}`;
+      }
+    }
+    const qiHours = memoData.quick_info?.hours_in_system;
+    if (qiHours !== undefined && qiHours !== null) {
+      const h = Math.floor(Number(qiHours));
+      if (!isNaN(h)) {
+        if (h < 24) return `${h} ${h === 1 ? "hour" : "hours"}`;
+        const d = Math.floor(h / 24);
+        return `${d} ${d === 1 ? "day" : "days"}`;
+      }
+    }
+    const qiDays = memoData.quick_info?.days_in_system;
+    if (qiDays !== undefined && qiDays !== null) {
+      const numDays = Number(qiDays);
+      if (!isNaN(numDays)) {
+        if (numDays < 1) {
+          const h = Math.round(numDays * 24);
+          return `${h} ${h === 1 ? "hour" : "hours"}`;
+        }
+        const d = Math.floor(numDays);
+        return `${d} ${d === 1 ? "day" : "days"}`;
+      }
+    }
+    return "—";
+  })();
   // : {
   //     trackingId: "EXT-2024-001",
   //     title: "Curriculum Review Guidelines",
@@ -186,9 +315,7 @@ function TrackMemoDetails({ onBack, memoData }) {
               <div className="text-blue-100 text-xs font-medium mb-1">
                 Time in System
               </div>
-              <div className="text-xl font-bold">
-                {data.daysInSystem} {data.daysInSystem === 1 ? "day" : "days"}
-              </div>
+              <div className="text-xl font-bold">{timeInSystemDisplay}</div>
             </div>
           </div>
         </div>
@@ -252,14 +379,35 @@ function TrackMemoDetails({ onBack, memoData }) {
                     {data.dateReceived}
                   </dd>
                 </div>
-                <div>
+                {/* <div>
                   <dt className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">
                     Current Department
                   </dt>
                   <dd className="text-xs font-medium text-gray-900">
-                    {data.currentDepartment}
+                    {isOfficeDepartment ? (
+                      currentOfficerName || currentOfficerEmail ? (
+                        <span>
+                          {currentOfficerName || "—"}
+                          {currentOfficerEmail && (
+                            <>
+                              <br />
+                              <a
+                                href={`mailto:${currentOfficerEmail}`}
+                                className="text-blue-600 hover:underline font-normal break-all"
+                              >
+                                {currentOfficerEmail}
+                              </a>
+                            </>
+                          )}
+                        </span>
+                      ) : (
+                        "No department"
+                      )
+                    ) : (
+                      data.currentDepartment
+                    )}
                   </dd>
-                </div>
+                </div> */}
                 <div>
                   <dt className="text-[10px] text-gray-500 uppercase tracking-wide mb-0.5">
                     Total Movements
@@ -381,9 +529,9 @@ function TrackMemoDetails({ onBack, memoData }) {
                   </dd>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                  <dt className="text-xs text-gray-500">Days in System</dt>
+                  <dt className="text-xs text-gray-500">Time in System</dt>
                   <dd className="text-xs font-bold text-gray-900">
-                    {data.daysInSystem}
+                    {timeInSystemDisplay}
                   </dd>
                 </div>
               </dl>
@@ -444,10 +592,10 @@ function TrackMemoDetails({ onBack, memoData }) {
                   Registry Office
                 </div>
                 <a
-                  href="mailto:registry@university.edu"
+                  href="mailto:support@unizik.edu.ng"
                   className="text-xs text-blue-600 hover:underline"
                 >
-                  registry@university.edu
+                  support@unizik.edu.ng
                 </a>
               </div>
             </div>

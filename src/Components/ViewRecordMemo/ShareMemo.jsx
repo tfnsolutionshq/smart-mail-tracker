@@ -1,35 +1,51 @@
-import React, { useState } from 'react'
-import { FiX, FiCopy, FiCheck } from 'react-icons/fi'
+import React, { useState } from "react";
+import { FiX, FiCopy, FiCheck } from "react-icons/fi";
 
-export default function ShareMemo({ 
-  isOpen, 
-  onClose, 
-  trackingId, 
+export default function ShareMemo({
+  isOpen,
+  onClose,
+  trackingId,
   trackingUrl,
   onSend,
-  isProcessing = false 
+  isProcessing = false,
 }) {
-  const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
-  const [copiedId, setCopiedId] = useState(false)
-  const [copiedUrl, setCopiedUrl] = useState(false)
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [copiedId, setCopiedId] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const handleCopy = async (text, type) => {
     try {
-      await navigator.clipboard.writeText(text)
-      if (type === 'id') {
-        setCopiedId(true)
-        setTimeout(() => setCopiedId(false), 2000)
+      await navigator.clipboard.writeText(text);
+      if (type === "id") {
+        setCopiedId(true);
+        setTimeout(() => setCopiedId(false), 2000);
       } else {
-        setCopiedUrl(true)
-        setTimeout(() => setCopiedUrl(false), 2000)
+        setCopiedUrl(true);
+        setTimeout(() => setCopiedUrl(false), 2000);
       }
     } catch (err) {
-      console.error('Failed to copy:', err)
+      console.error("Failed to copy:", err);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
+
+  const handleSend = () => {
+    if (isProcessing) return;
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setEmailError("Recipient email is required");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailError("Enter a valid email address");
+      return;
+    }
+    setEmailError("");
+    onSend({ email: trimmed, message });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/90 p-4 md:inset-0 h-modal md:h-full">
@@ -58,44 +74,62 @@ export default function ShareMemo({
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Tracking ID:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-900">{trackingId || 'N/A'}</span>
-                  <button 
-                    onClick={() => handleCopy(trackingId, 'id')}
+                  <span className="text-xs font-medium text-gray-900">
+                    {trackingId || "N/A"}
+                  </span>
+                  <button
+                    onClick={() => handleCopy(trackingId, "id")}
                     className="text-gray-500 hover:text-gray-700"
                     title="Copy ID"
                   >
-                    {copiedId ? <FiCheck className="w-3 h-3 text-green-500" /> : <FiCopy className="w-3 h-3" />}
+                    {copiedId ? (
+                      <FiCheck className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <FiCopy className="w-3 h-3" />
+                    )}
                   </button>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Tracking URL:</span>
-                <button 
-                  onClick={() => handleCopy(trackingUrl, 'url')}
+                <button
+                  onClick={() => handleCopy(trackingUrl, "url")}
                   className="flex items-center gap-1 text-xs text-gray-900 hover:text-gray-700"
                 >
                   <FiCopy className="w-3 h-3" />
-                  <span>{copiedUrl ? 'Copied' : 'Copy'}</span>
+                  <span>{copiedUrl ? "Copied" : "Copy"}</span>
                 </button>
               </div>
             </div>
 
             {/* Email Input */}
             <div>
-              <label className="block mb-1 text-sm font-medium text-gray-900">Recipient Email</label>
+              <label className="block mb-1 text-sm font-medium text-gray-900">
+                Recipient Email
+              </label>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block p-2 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                className={`block p-2 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border focus:ring-blue-500 focus:border-blue-500 ${
+                  emailError ? "border-red-500" : "border-gray-300"
+                }`}
                 placeholder="name@company.com"
                 required
               />
+              {emailError && (
+                <p className="mt-1 text-xs text-red-600">{emailError}</p>
+              )}
             </div>
 
             {/* Message Input */}
             <div>
-              <label className="block mb-1 text-sm font-medium text-gray-900">Message (Optional)</label>
+              <label className="block mb-1 text-sm font-medium text-gray-900">
+                Message (Optional)
+              </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -118,21 +152,39 @@ export default function ShareMemo({
             </button>
             <button
               type="button"
-              onClick={() => onSend({ email, message })}
-              disabled={isProcessing || !email}
-              className="text-white bg-gray-900 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 text-center flex items-center gap-2"
+              onClick={handleSend}
+              disabled={isProcessing}
+              className={`text-white bg-gray-900 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 text-center flex items-center gap-2 ${
+                isProcessing ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {isProcessing && (
-                <svg className="animate-spin h-3 w-3 text-white" xmlns="https://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-3 w-3 text-white"
+                  xmlns="https://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
               )}
-              Share
+              {isProcessing ? "Sharing..." : "Share"}
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

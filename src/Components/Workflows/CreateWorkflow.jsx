@@ -28,12 +28,14 @@ function CreateWorkflow() {
   const [category, setCategory] = useState("");
   const [keyFeatures, setKeyFeatures] = useState([""]);
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [showAddStep, setShowAddStep] = useState(false);
   const [showEditStep, setShowEditStep] = useState(false);
   const [editingStep, setEditingStep] = useState(null);
   const [workflowSteps, setWorkflowSteps] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(isEditing);
 
   const getRoleName = (roleIds) => {
     if (!Array.isArray(roles)) return "Unknown Role";
@@ -94,6 +96,8 @@ function CreateWorkflow() {
   };
 
   const fetchData = useCallback(async () => {
+    setCategoriesLoading(true);
+    if (isEditing) setDetailsLoading(true);
     try {
       const promises = [
         categoryAPI.getCategories(token),
@@ -140,12 +144,25 @@ function CreateWorkflow() {
     } catch (error) {
       console.error("Error fetching data:", error);
       showNotification("Failed to fetch data", "error");
+    } finally {
+      setCategoriesLoading(false);
+      setDetailsLoading(false);
     }
   }, [id, isEditing, showNotification, token]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  if (isEditing && detailsLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-3"></div>
+        </div>
+      </div>
+    );
+  }
 
   const addFeature = () => {
     setKeyFeatures([...keyFeatures, ""]);
@@ -340,9 +357,14 @@ function CreateWorkflow() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-2 py-1.5 bg-gray-100 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-gray-900 focus:border-transparent"
+                  disabled={categoriesLoading}
+                  className="w-full px-2 py-1.5 bg-gray-100 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-gray-900 focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select category</option>
+                  <option value="">
+                    {categoriesLoading
+                      ? "Loading categories..."
+                      : "Select category"}
+                  </option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}

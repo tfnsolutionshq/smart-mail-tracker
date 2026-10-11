@@ -37,6 +37,7 @@ function TrackMemo() {
       );
 
       if (response.data.status) {
+        console.log(response.data.data);
         setSearchResult(response.data.data);
         setHasSearched(true);
       }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 import Toast from '../Components/Notifications/Toast'
 
 const NotificationContext = createContext()
@@ -14,17 +14,19 @@ export const useNotification = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([])
 
-  const showNotification = (message, type = 'success') => {
+  const showNotification = useCallback((message, type = 'success') => {
     const id = Date.now()
     setNotifications(prev => [...prev, { id, message, type }])
-  }
+  }, [])
 
-  const removeNotification = (id) => {
+  const removeNotification = useCallback((id) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id))
-  }
+  }, [])
+
+  const value = useMemo(() => ({ showNotification }), [showNotification])
 
   return (
-    <NotificationContext.Provider value={{ showNotification }}>
+    <NotificationContext.Provider value={value}>
       {children}
       {notifications.map(notification => (
         <Toast

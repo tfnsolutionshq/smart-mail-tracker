@@ -6,7 +6,7 @@ import { useNotification } from "../../context/NotificationContext";
 import { roleAPI, identityBaseUrl } from "../../services/api";
 import EditRole from "./EditRole";
 
-function RoleManagment() {
+function RoleManagment({ refreshSignal = 0 }) {
   const [selectedPermission, setSelectedPermission] = useState("");
   const [showEditRole, setShowEditRole] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -20,6 +20,7 @@ function RoleManagment() {
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [deletingRole, setDeletingRole] = useState(false);
   const roleMenuRef = useRef(null);
   const permissionMenuRef = useRef(null);
@@ -28,6 +29,7 @@ function RoleManagment() {
 
   const fetchData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [rolesResponse, permissionsResponse] = await Promise.all([
         roleAPI.getRoles(token),
@@ -43,6 +45,7 @@ function RoleManagment() {
       }
     } catch (error) {
       console.error("Error fetching roles/permissions:", error);
+      setError("Failed to fetch roles and permissions. Please try again.");
       showNotification("Failed to fetch roles and permissions", "error");
     } finally {
       setLoading(false);
@@ -51,7 +54,7 @@ function RoleManagment() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [refreshSignal]);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -114,6 +117,20 @@ function RoleManagment() {
 
   return (
     <div className="p-4 sm:p-6">
+      {error && !loading ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-center">
+            <p className="text-red-600 mb-2">{error}</p>
+            <button
+              type="button"
+              onClick={fetchData}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Role Management */}
         <div className="space-y-4">
@@ -250,6 +267,7 @@ function RoleManagment() {
           )}
         </div>
       </div>
+      )}
 
       {/* Edit Role Modal */}
       {showEditRole && selectedRole && (

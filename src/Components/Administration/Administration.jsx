@@ -49,6 +49,7 @@ function Administrations() {
   const [showAddDepartment, setShowAddDepartment] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [rolesRefreshKey, setRolesRefreshKey] = useState(0);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -689,7 +690,9 @@ function Administrations() {
         )}
 
         {/* Roles & Permissions Tab Content */}
-        {activeTab === "Roles & Permissions" && <RoleManagment />}
+        {activeTab === "Roles & Permissions" && (
+          <RoleManagment refreshSignal={rolesRefreshKey} />
+        )}
 
         {/* Departments Tab Content */}
         {activeTab === "Departments" && <Departments />}
@@ -827,7 +830,12 @@ function Administrations() {
           onUserUpdated={() => refreshUsers()}
         />
       )}
-      {showAddRole && <AddRole onClose={() => setShowAddRole(false)} />}
+      {showAddRole && (
+        <AddRole
+          onClose={() => setShowAddRole(false)}
+          onSuccess={() => setRolesRefreshKey((k) => k + 1)}
+        />
+      )}
       {showAddDepartment && (
         <AddDepartment
           onClose={() => setShowAddDepartment(false)}

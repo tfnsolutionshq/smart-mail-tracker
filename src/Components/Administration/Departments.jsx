@@ -15,6 +15,7 @@ function Departments() {
   const [stats, setStats] = useState({ total_departments: 0, active_departments: 0 })
   const [totalUsers, setTotalUsers] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -27,6 +28,7 @@ function Departments() {
 
   const fetchData = async (page = 1, search = '') => {
     setLoading(true)
+    setError(null)
     try {
       const filters = { page }
       if (search) filters.search = search
@@ -53,6 +55,7 @@ function Departments() {
       }
     } catch (error) {
       console.error('Error fetching departments:', error)
+      setError('Failed to fetch departments. Please try again.')
       showNotification('Failed to fetch departments', 'error')
     } finally {
       setLoading(false)
@@ -229,6 +232,19 @@ function Departments() {
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
+      ) : error ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-center">
+            <p className="text-red-600 mb-2">{error}</p>
+            <button
+              type="button"
+              onClick={() => fetchData(currentPage, debouncedSearch)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       ) : departments.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-sm text-gray-500">
@@ -299,7 +315,7 @@ function Departments() {
       )}
 
       {/* Pagination */}
-      {lastPage > 1 && (
+      {!error && lastPage > 1 && (
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
           <p className="text-xs text-gray-500">
             Showing page {currentPage} of {lastPage} ({total} departments)
